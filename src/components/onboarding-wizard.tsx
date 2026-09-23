@@ -73,12 +73,32 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
   const [units, setUnits] = useState<"metric" | "imperial">("metric");
   const [goal, setGoal] = useState("lose");
 
+  const isLastStep = step === STEPS.length - 1;
+
+  function handleAction(formData: FormData) {
+    if (!isLastStep) {
+      setStep((current) => Math.min(current + 1, STEPS.length - 1));
+      return;
+    }
+    formAction(formData);
+  }
+
   const weightUnit = units === "metric" ? "kg" : "lb";
   const lengthUnit = units === "metric" ? "cm" : "in";
   const showPace = goal === "lose" || goal === "gain" || goal === "bulk";
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form
+      action={handleAction}
+      className="space-y-5"
+      onKeyDown={(event) => {
+        const target = event.target as HTMLElement;
+        if (!isLastStep && event.key === "Enter" && target.tagName !== "TEXTAREA") {
+          event.preventDefault();
+          setStep((current) => Math.min(current + 1, STEPS.length - 1));
+        }
+      }}
+    >
       <ol className="flex gap-1.5" aria-label="Onboarding progress">
         {STEPS.map((label, index) => (
           <li key={label} className="flex-1">
@@ -360,17 +380,18 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
             Back
           </Button>
         ) : null}
-        {step < STEPS.length - 1 ? (
+        {isLastStep ? (
+          <Button key="submit" type="submit" className="flex-1" disabled={pending}>
+            {pending ? "Building your plan…" : "Build my plan"}
+          </Button>
+        ) : (
           <Button
+            key="next"
             type="button"
             className="flex-1"
             onClick={() => setStep((current) => current + 1)}
           >
             Continue
-          </Button>
-        ) : (
-          <Button type="submit" className="flex-1" disabled={pending}>
-            {pending ? "Building your plan…" : "Build my plan"}
           </Button>
         )}
       </div>
