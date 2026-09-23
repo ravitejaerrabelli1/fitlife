@@ -1,69 +1,78 @@
-import Image from "next/image";
+import { redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth";
+import { getProfile } from "@/lib/profile";
+import { Card, Disclaimer, LinkButton } from "@/components/ui";
 
-export default function Home() {
+const FEATURES = [
+  {
+    title: "Calories and macros",
+    body: "Mifflin-St Jeor or Katch-McArdle estimates, with conservative goal adjustments and floors that keep intake sensible.",
+  },
+  {
+    title: "Meal plans and recipes",
+    body: "1, 3, 7 or 14 day plans across six cuisines, with swaps, scaling and a consolidated grocery list.",
+  },
+  {
+    title: "Training that fits your week",
+    body: "Full body, upper/lower or push-pull-legs programmes built from your equipment, experience and session length.",
+  },
+  {
+    title: "Cardio and steps",
+    body: "Low, moderate and high intensity sessions scheduled around lifting, with MET-based calorie estimates.",
+  },
+  {
+    title: "Progress you can read",
+    body: "Rolling weight averages, calorie and protein adherence, strength volume and waist trends.",
+  },
+  {
+    title: "Your data stays yours",
+    body: "Email and password accounts, one-click export, and account deletion that removes everything.",
+  },
+];
+
+export default async function Home() {
+  const user = await getSessionUser();
+  if (user) {
+    const profile = getProfile(user.id);
+    redirect(profile?.onboarded ? "/dashboard" : "/onboarding");
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main id="main" className="mx-auto w-full max-w-3xl px-5 py-12">
+      <p className="text-sm font-semibold tracking-wide text-brand uppercase">
+        FitLife
+      </p>
+      <h1 className="mt-2 text-3xl font-semibold leading-tight sm:text-4xl">
+        Nutrition and training, built around the person actually doing it.
+      </h1>
+      <p className="mt-3 text-muted">
+        Answer a few questions and get calorie and macro estimates, a meal plan
+        with a grocery list, a training programme for your equipment, and
+        tracking that reacts to trends rather than single days.
+      </p>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <LinkButton href="/signup">Create an account</LinkButton>
+        <LinkButton href="/signin" variant="secondary">
+          Sign in
+        </LinkButton>
+      </div>
+
+      <div className="mt-10 grid gap-3 sm:grid-cols-2">
+        {FEATURES.map((feature) => (
+          <Card key={feature.title} as="article">
+            <h2 className="font-semibold">{feature.title}</h2>
+            <p className="mt-1 text-sm text-muted">{feature.body}</p>
+          </Card>
+        ))}
+      </div>
+
+      <div className="mt-10 rounded-2xl border border-border bg-surface-muted p-4">
+        <h2 className="text-sm font-semibold">Before you start</h2>
+        <div className="mt-2">
+          <Disclaimer />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

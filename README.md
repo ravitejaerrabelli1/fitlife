@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FitLife
 
-## Getting Started
+A mobile-first nutrition and training app: onboarding, calorie and macro targets, meal
+plans and recipes, strength programming, cardio scheduling, and progress tracking —
+all scoped to an authenticated account.
 
-First, run the development server:
+Every number the app shows is an estimate, not medical advice.
+
+## Stack
+
+- Next.js (App Router) + React + TypeScript
+- Tailwind CSS 4
+- SQLite via Node's built-in `node:sqlite` (no native build step)
+- bcryptjs for password hashing, cookie-backed sessions
+- Recharts for progress charts
+- Vitest for unit tests
+
+Requires Node 24+ (for `node:sqlite`).
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000, create an account, and complete onboarding.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The database is created on first use at `data/fitlife.db`. Override with
+`DATABASE_FILE`. Set `ADMIN_EMAIL` before signing up to give that account the admin
+role.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Checks
 
-## Learn More
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `src/lib/calc` — BMR, TDEE, macros, BMI, body fat, weight trends, adaptive
+  suggestions, unit conversion (pure functions, unit tested)
+- `src/lib/content` — recipes, exercises, cardio activities, foods, supplements
+- `src/lib/planner` — meal plan, workout program and cardio schedule generators
+- `src/lib/db.ts`, `auth.ts`, `profile.ts`, `logs.ts` — persistence, sessions, logging
+- `src/app/actions.ts` — server actions (each re-checks the session)
+- `src/app/(app)` — authenticated screens: dashboard, food, recipes, meal plan, train,
+  cardio, progress, profile, search, favorites, admin
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Notes on the recommendations
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Mifflin-St Jeor by default; Katch-McArdle when body fat is known.
+- Calorie targets are floored (1500 kcal male / 1200 kcal female, and never below
+  1.05 × BMR) and paces are conservative.
+- Weight decisions use rolling averages, never a single weigh-in.
+- Adaptive calorie changes are surfaced as suggestions and only applied if you accept.
