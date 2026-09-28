@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS workout_sessions (
   status TEXT NOT NULL DEFAULT 'in_progress',
   duration_min INTEGER,
   notes TEXT NOT NULL DEFAULT '',
+  substitutions TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL
 );
 
@@ -215,6 +216,11 @@ declare global {
 
 const ADDED_COLUMNS: { table: string; column: string; definition: string }[] = [
   { table: "profiles", column: "cardio_days", definition: "INTEGER" },
+  {
+    table: "workout_sessions",
+    column: "substitutions",
+    definition: "TEXT NOT NULL DEFAULT '{}'",
+  },
 ];
 
 function migrate(db: DatabaseSync): void {

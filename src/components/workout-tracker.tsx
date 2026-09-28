@@ -2,12 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { finishWorkoutAction, logSetAction } from "@/app/actions";
+import {
+  finishWorkoutAction,
+  logSetAction,
+  substituteExerciseAction,
+} from "@/app/actions";
 import { Badge, Button, Card, Input, SectionHeading, Select } from "./ui";
 
 export interface TrackerExercise {
   exerciseId: string;
   name: string;
+  activeExerciseId: string;
+  activeName: string;
   sets: number;
   reps: string;
   restSeconds: number;
@@ -28,7 +34,6 @@ export function WorkoutTracker({
   weightUnit: string;
 }) {
   const [skipped, setSkipped] = useState<Record<string, boolean>>({});
-  const [replacements, setReplacements] = useState<Record<string, string>>({});
   const [rest, setRest] = useState<number | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -70,12 +75,9 @@ export function WorkoutTracker({
       ) : null}
 
       {exercises.map((exercise) => {
-        const replacedWith = replacements[exercise.exerciseId];
-        const alternative = exercise.alternatives.find(
-          (item) => item.id === replacedWith,
-        );
-        const activeId = alternative?.id ?? exercise.exerciseId;
-        const activeName = alternative?.name ?? exercise.name;
+        const activeId = exercise.activeExerciseId;
+        const activeName = exercise.activeName;
+        const replacedWith = activeId === exercise.exerciseId ? "" : activeId;
         const isSkipped = skipped[exercise.exerciseId];
 
         return (
@@ -102,26 +104,30 @@ export function WorkoutTracker({
               <>
                 <p className="text-xs text-muted">{exercise.suggestion}</p>
                 {exercise.alternatives.length ? (
-                  <label className="mt-2 block text-xs text-muted">
-                    Swap for
-                    <Select
-                      className="mt-1"
-                      value={replacedWith ?? ""}
-                      onChange={(event) =>
-                        setReplacements((current) => ({
-                          ...current,
-                          [exercise.exerciseId]: event.target.value,
-                        }))
-                      }
-                    >
-                      <option value="">{exercise.name} (as planned)</option>
-                      {exercise.alternatives.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </label>
+                  <form action={substituteExerciseAction} className="mt-2">
+                    <input type="hidden" name="sessionId" value={sessionId} />
+                    <input
+                      type="hidden"
+                      name="plannedExerciseId"
+                      value={exercise.exerciseId}
+                    />
+                    <label className="block text-xs text-muted">
+                      Swap for
+                      <Select
+                        className="mt-1"
+                        name="substituteId"
+                        defaultValue={replacedWith}
+                        onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                      >
+                        <option value="">{exercise.name} (as planned)</option>
+                        {exercise.alternatives.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </label>
+                  </form>
                 ) : null}
 
                 <ul className="mt-3 space-y-2">

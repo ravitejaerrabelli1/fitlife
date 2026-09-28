@@ -21,6 +21,17 @@ interface SessionRow {
   day_key: string;
   status: string;
   date: string;
+  substitutions: string;
+}
+
+function parseSubstitutions(raw: string): Record<string, string> {
+  try {
+    const parsed: unknown = JSON.parse(raw || "{}");
+    if (parsed && typeof parsed === "object") return parsed as Record<string, string>;
+  } catch {
+    // Fall through to an empty map for corrupt rows.
+  }
+  return {};
 }
 
 export default async function WorkoutSessionPage({
@@ -31,7 +42,7 @@ export default async function WorkoutSessionPage({
   const { user, profile } = await requireOnboardedProfile();
   const { id } = await params;
   const session = get<SessionRow>(
-    "SELECT id, name, day_key, status, date FROM workout_sessions WHERE id = ? AND user_id = ?",
+    "SELECT id, name, day_key, status, date, substitutions FROM workout_sessions WHERE id = ? AND user_id = ?",
     [id, user.id],
   );
   if (!session) notFound();
@@ -60,9 +71,13 @@ export default async function WorkoutSessionPage({
     [session.id, user.id],
   );
 
+  const substitutions = parseSubstitutions(session.substitutions);
+
   const exercises: TrackerExercise[] = day.exercises.map((planned) => {
     const base = getExercise(planned.exerciseId);
-    const history = exerciseHistory(user.id, planned.exerciseId);
+    const substitute = getExercise(substitutions[planned.exerciseId] ?? "");
+    const activeId = substitute?.id ?? planned.exerciseId;
+    const history = exerciseHistory(user.id, activeId);
     const progression = suggestProgression({
       history: history.map((set) => ({
         weightKg: set.weight_kg,
@@ -74,6 +89,8 @@ export default async function WorkoutSessionPage({
     return {
       exerciseId: planned.exerciseId,
       name: planned.name,
+      activeExerciseId: activeId,
+      activeName: substitute?.name ?? planned.name,
       sets: planned.sets,
       reps: planned.reps,
       restSeconds: planned.restSeconds,
@@ -81,7 +98,7 @@ export default async function WorkoutSessionPage({
       suggestion: progression.message,
       suggestedWeightKg: progression.suggestedWeightKg,
       loggedSets: loggedSets
-        .filter((set) => set.exercise_id === planned.exerciseId)
+        .filter((set) => set.exercise_id === activeId)
         .map((set) => ({
           setNumber: set.set_number,
           weightKg: set.weight_kg,

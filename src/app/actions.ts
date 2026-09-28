@@ -30,6 +30,7 @@ import { generateMealPlan } from "@/lib/planner/meals";
 import { estimatedOneRepMax, sessionVolume } from "@/lib/planner/workouts";
 import { calculateEstimatedCardioCalories } from "@/lib/calc/engine";
 import { getCardioActivity } from "@/lib/content/cardio";
+import { getExercise } from "@/lib/content/exercises";
 import { lbToKg, inToCm } from "@/lib/calc/units";
 
 export interface ActionResult {
@@ -564,6 +565,12 @@ export async function logSetAction(formData: FormData): Promise<void> {
     [sessionId, user.id],
   );
   if (!owned) return;
+  const exerciseId = str(formData.get("exerciseId"));
+  const setNumber = Number(formData.get("setNumber") ?? 1);
+  run(
+    "DELETE FROM workout_sets WHERE session_id = ? AND user_id = ? AND exercise_id = ? AND set_number = ?",
+    [sessionId, user.id, exerciseId, setNumber],
+  );
   run(
     `INSERT INTO workout_sets (id, session_id, user_id, exercise_id, exercise_name, set_number, weight_kg, reps, rpe, completed, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
@@ -571,15 +578,67 @@ export async function logSetAction(formData: FormData): Promise<void> {
       newId(),
       sessionId,
       user.id,
-      str(formData.get("exerciseId")),
+      exerciseId,
       str(formData.get("exerciseName")),
-      Number(formData.get("setNumber") ?? 1),
+      setNumber,
       Number(formData.get("weight") ?? 0),
       Number(formData.get("reps") ?? 0),
       num(formData.get("rpe")),
       nowIso(),
     ],
   );
+  revalidatePath(`/train/session/${sessionId}`);
+}
+
+/** Persists an exercise swap so logged sets stay attached after a reload. */
+export async function substituteExerciseAction(formData: FormData): Promise<void> {
+  const user = await requireSession();
+  const sessionId = str(formData.get("sessionId"));
+  const plannedId = str(formData.get("plannedExerciseId"));
+  const substituteId = str(formData.get("substituteId"));
+  if (!plannedId) return;
+  const owned = get<{ substitutions: string }>(
+    "SELECT substitutions FROM workout_sessions WHERE id = ? AND user_id = ?",
+    [sessionId, user.id],
+  );
+  if (!owned) return;
+
+  let substitutions: Record<string, string> = {};
+  try {
+    const parsed: unknown = JSON.parse(owned.substitutions || "{}");
+    if (parsed && typeof parsed === "object") {
+      substitutions = parsed as Record<string, string>;
+    }
+  } catch {
+    substitutions = {};
+  }
+
+  const previousId = substitutions[plannedId] ?? plannedId;
+  if (substituteId && getExercise(substituteId)) {
+    substitutions[plannedId] = substituteId;
+  } else {
+    delete substitutions[plannedId];
+  }
+  const nextId = substitutions[plannedId] ?? plannedId;
+
+  if (nextId !== previousId) {
+    run(
+      "UPDATE workout_sets SET exercise_id = ?, exercise_name = ? WHERE session_id = ? AND user_id = ? AND exercise_id = ?",
+      [
+        nextId,
+        getExercise(nextId)?.name ?? nextId,
+        sessionId,
+        user.id,
+        previousId,
+      ],
+    );
+  }
+
+  run("UPDATE workout_sessions SET substitutions = ? WHERE id = ? AND user_id = ?", [
+    JSON.stringify(substitutions),
+    sessionId,
+    user.id,
+  ]);
   revalidatePath(`/train/session/${sessionId}`);
 }
 
