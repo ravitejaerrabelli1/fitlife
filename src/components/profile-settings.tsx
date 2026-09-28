@@ -268,7 +268,12 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
             </Select>
           </Field>
           <Field label="Theme preference" htmlFor="p-theme">
-            <Select id="p-theme" name="theme" defaultValue={profile.theme}>
+            <Select
+              key={profile.theme}
+              id="p-theme"
+              name="theme"
+              defaultValue={profile.theme}
+            >
               <option value="system">Follow system</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
