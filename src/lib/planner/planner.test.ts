@@ -57,6 +57,20 @@ describe("meal planner", () => {
     ).toBe(true);
   });
 
+  it("matches allergen synonyms, not just the literal term", () => {
+    const milkFree = filterRecipes({ ...basePreferences, allergies: ["milk"] });
+    expect(milkFree.length).toBeGreaterThan(0);
+    expect(
+      milkFree.every((recipe) =>
+        recipe.ingredients.every(
+          (ingredient) =>
+            ingredient.category !== "dairy" &&
+            !/yogurt|paneer|cheese|butter|cream|whey/i.test(ingredient.name),
+        ),
+      ),
+    ).toBe(true);
+  });
+
   it("consolidates grocery quantities across days", () => {
     const plan = generateMealPlan({
       days: 7,

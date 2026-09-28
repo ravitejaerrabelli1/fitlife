@@ -25,9 +25,14 @@ import {
   setWeight,
   toggleFavorite,
 } from "@/lib/logs";
-import { requireSession } from "@/lib/session";
+import { requireOnboardedProfile, requireSession } from "@/lib/session";
+import type { Equipment, Experience, Goal } from "@/lib/calc/types";
 import { generateMealPlan } from "@/lib/planner/meals";
-import { estimatedOneRepMax, sessionVolume } from "@/lib/planner/workouts";
+import {
+  estimatedOneRepMax,
+  generateWorkoutProgram,
+  sessionVolume,
+} from "@/lib/planner/workouts";
 import { calculateEstimatedCardioCalories } from "@/lib/calc/engine";
 import { getCardioActivity } from "@/lib/content/cardio";
 import { getExercise } from "@/lib/content/exercises";
@@ -107,9 +112,12 @@ export async function requestPasswordResetAction(
     "INSERT INTO password_resets (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
     [token, user.id, nowIso(), new Date(Date.now() + 3600_000).toISOString()],
   );
+  // Email delivery is not configured; the link is only written to the server log.
+  console.info(`[password reset] /reset/${token}`);
   return {
     ok: true,
-    message: `Email delivery is not configured in this deployment, so use this one-hour link directly: /reset/${token}`,
+    message:
+      "If an account exists for that email, a reset link has been created.",
   };
 }
 
@@ -271,9 +279,15 @@ export async function updateProfileAction(
   for (const field of numericFields) {
     if (formData.has(field)) patch[field] = num(formData.get(field));
   }
+  if (typeof patch.calorie_override === "number") {
+    const override = patch.calorie_override;
+    if (override < 800 || override > 8000) {
+      return { ok: false, error: "Calorie override must be 800–8000 kcal." };
+    }
+  }
   if (formData.has("allergies")) patch.allergies = str(formData.get("allergies"));
   if (formData.has("dislikes")) patch.dislikes = str(formData.get("dislikes"));
-  if (formData.has("equipment")) {
+  if (formData.has("equipmentSubmitted") || formData.has("equipment")) {
     patch.equipment = formData.getAll("equipment").map(String);
   }
   if (formData.has("dietPrefs")) {
@@ -288,7 +302,10 @@ export async function updateProfileAction(
   }
 
   updateProfile(user.id, patch);
-  if (typeof patch.weight_kg === "number") {
+  if (
+    typeof patch.weight_kg === "number" &&
+    patch.weight_kg !== profile.weight_kg
+  ) {
     setWeight(user.id, patch.weight_kg);
   }
   revalidatePath("/profile");
@@ -531,7 +548,9 @@ export async function swapMealAction(formData: FormData): Promise<void> {
 
 export async function logPlannedMealAction(formData: FormData): Promise<void> {
   const user = await requireSession();
+  const date = str(formData.get("date"));
   addNutritionLog(user.id, {
+    date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined,
     meal: str(formData.get("slot")) || "lunch",
     name: str(formData.get("name")),
     source: "recipe",
@@ -547,16 +566,29 @@ export async function logPlannedMealAction(formData: FormData): Promise<void> {
 }
 
 export async function startWorkoutAction(formData: FormData): Promise<void> {
-  const user = await requireSession();
+  const { user, profile } = await requireOnboardedProfile();
+  const dayKey = str(formData.get("dayKey"));
+  const program = generateWorkoutProgram({
+    goal: (profile.goal ?? "maintain") as Goal,
+    experience: (profile.experience ?? "beginner") as Experience,
+    daysPerWeek: profile.workout_days ?? 3,
+    sessionMinutes: profile.workout_minutes ?? 45,
+    equipment: (profile.equipment.length
+      ? profile.equipment
+      : ["bodyweight"]) as Equipment[],
+  });
+  const day = program.days.find((item) => item.key === dayKey) ?? program.days[0];
   const id = newId();
   run(
-    "INSERT INTO workout_sessions (id, user_id, date, name, day_key, status, created_at) VALUES (?, ?, ?, ?, ?, 'in_progress', ?)",
+    "INSERT INTO workout_sessions (id, user_id, date, name, day_key, status, plan, created_at) VALUES (?, ?, ?, ?, ?, 'in_progress', ?, ?)",
     [
       id,
       user.id,
       today(),
-      str(formData.get("name")) || "Workout",
-      str(formData.get("dayKey")),
+      str(formData.get("name")) || day.name,
+      dayKey,
+      // Snapshot the prescription so later profile edits cannot rewrite this session.
+      JSON.stringify({ focus: day.focus, exercises: day.exercises }),
       nowIso(),
     ],
   );
@@ -566,13 +598,16 @@ export async function startWorkoutAction(formData: FormData): Promise<void> {
 export async function logSetAction(formData: FormData): Promise<void> {
   const user = await requireSession();
   const sessionId = str(formData.get("sessionId"));
-  const owned = get<{ id: string }>(
-    "SELECT id FROM workout_sessions WHERE id = ? AND user_id = ?",
+  const owned = get<{ status: string }>(
+    "SELECT status FROM workout_sessions WHERE id = ? AND user_id = ?",
     [sessionId, user.id],
   );
-  if (!owned) return;
+  if (!owned || owned.status === "complete") return;
   const exerciseId = str(formData.get("exerciseId"));
   const setNumber = Number(formData.get("setNumber") ?? 1);
+  const profile = getProfile(user.id);
+  const weight = Number(formData.get("weight") ?? 0);
+  const weightKg = profile?.units === "imperial" ? lbToKg(weight) : weight;
   run(
     "DELETE FROM workout_sets WHERE session_id = ? AND user_id = ? AND exercise_id = ? AND set_number = ?",
     [sessionId, user.id, exerciseId, setNumber],
@@ -587,7 +622,7 @@ export async function logSetAction(formData: FormData): Promise<void> {
       exerciseId,
       str(formData.get("exerciseName")),
       setNumber,
-      Number(formData.get("weight") ?? 0),
+      weightKg,
       Number(formData.get("reps") ?? 0),
       num(formData.get("rpe")),
       nowIso(),
@@ -603,11 +638,11 @@ export async function substituteExerciseAction(formData: FormData): Promise<void
   const plannedId = str(formData.get("plannedExerciseId"));
   const substituteId = str(formData.get("substituteId"));
   if (!plannedId) return;
-  const owned = get<{ substitutions: string }>(
-    "SELECT substitutions FROM workout_sessions WHERE id = ? AND user_id = ?",
+  const owned = get<{ substitutions: string; status: string }>(
+    "SELECT substitutions, status FROM workout_sessions WHERE id = ? AND user_id = ?",
     [sessionId, user.id],
   );
-  if (!owned) return;
+  if (!owned || owned.status === "complete") return;
 
   let substitutions: Record<string, string> = {};
   try {
@@ -618,6 +653,11 @@ export async function substituteExerciseAction(formData: FormData): Promise<void
   } catch {
     substitutions = {};
   }
+
+  const takenElsewhere = Object.entries(substitutions).some(
+    ([slot, active]) => slot !== plannedId && active === substituteId,
+  );
+  if (substituteId && takenElsewhere) return;
 
   const previousId = substitutions[plannedId] ?? plannedId;
   if (substituteId && getExercise(substituteId)) {
@@ -652,7 +692,7 @@ export async function finishWorkoutAction(formData: FormData): Promise<void> {
   const user = await requireSession();
   const sessionId = str(formData.get("sessionId"));
   run(
-    "UPDATE workout_sessions SET status = 'complete', duration_min = ?, notes = ? WHERE id = ? AND user_id = ?",
+    "UPDATE workout_sessions SET status = 'complete', duration_min = ?, notes = ? WHERE id = ? AND user_id = ? AND status != 'complete'",
     [
       num(formData.get("duration")) ?? null,
       str(formData.get("notes")),

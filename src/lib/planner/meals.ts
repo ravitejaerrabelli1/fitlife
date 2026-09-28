@@ -111,6 +111,84 @@ function hasDairy(recipe: Recipe): boolean {
   return recipe.ingredients.some((ingredient) => ingredient.category === "dairy");
 }
 
+const DAIRY_TERMS = [
+  "milk",
+  "dairy",
+  "yogurt",
+  "yoghurt",
+  "curd",
+  "kefir",
+  "paneer",
+  "cheese",
+  "ricotta",
+  "feta",
+  "mozzarella",
+  "parmesan",
+  "butter",
+  "ghee",
+  "cream",
+  "whey",
+  "casein",
+];
+
+const NUT_TERMS = [
+  "almond",
+  "cashew",
+  "walnut",
+  "pecan",
+  "pistachio",
+  "hazelnut",
+  "macadamia",
+  "nut butter",
+];
+
+const WHEAT_TERMS = [
+  "wheat",
+  "flour",
+  "seitan",
+  "bread",
+  "pita",
+  "couscous",
+  "pasta",
+  "bulgur",
+  "flatbread",
+  "bun",
+  "tortilla",
+  "cracker",
+];
+
+/** Canonical allergens map to the ingredient names that actually contain them. */
+const ALLERGEN_TERMS: Record<string, string[]> = {
+  milk: DAIRY_TERMS,
+  dairy: DAIRY_TERMS,
+  lactose: DAIRY_TERMS,
+  egg: ["egg", "mayonnaise", "mayo", "albumen"],
+  eggs: ["egg", "mayonnaise", "mayo", "albumen"],
+  peanut: ["peanut", "groundnut"],
+  peanuts: ["peanut", "groundnut"],
+  nut: NUT_TERMS,
+  nuts: NUT_TERMS,
+  tree_nut: NUT_TERMS,
+  "tree nut": NUT_TERMS,
+  "tree nuts": NUT_TERMS,
+  soy: ["soy", "soya", "tofu", "tempeh", "edamame", "miso"],
+  soya: ["soy", "soya", "tofu", "tempeh", "edamame", "miso"],
+  wheat: WHEAT_TERMS,
+  gluten: WHEAT_TERMS,
+  fish: ["fish", "salmon", "tuna", "cod", "tilapia", "anchovy", "sardine"],
+  shellfish: ["shellfish", "shrimp", "prawn", "crab", "lobster", "scallop"],
+  shrimp: ["shrimp", "prawn"],
+  sesame: ["sesame", "tahini"],
+};
+
+const DAIRY_ALLERGENS = new Set(["milk", "dairy", "lactose"]);
+
+function hasAllergen(recipe: Recipe, allergy: string): boolean {
+  if (DAIRY_ALLERGENS.has(allergy) && hasDairy(recipe)) return true;
+  const terms = ALLERGEN_TERMS[allergy] ?? [allergy];
+  return hasIngredient(recipe, terms);
+}
+
 export function filterRecipes(
   preferences: PlannerPreferences,
   slot?: MealSlot,
@@ -132,7 +210,7 @@ export function filterRecipes(
       const rule = DIET_EXCLUSIONS[pref];
       if (rule && !rule(recipe)) return false;
     }
-    if (allergies.length && hasIngredient(recipe, allergies)) return false;
+    if (allergies.some((allergy) => hasAllergen(recipe, allergy))) return false;
     if (dislikes.length && hasIngredient(recipe, dislikes)) return false;
     return true;
   });

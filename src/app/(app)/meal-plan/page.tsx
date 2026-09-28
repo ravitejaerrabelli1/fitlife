@@ -112,6 +112,7 @@ export default async function MealPlanPage() {
                           </Button>
                         </form>
                         <form action={logPlannedMealAction}>
+                          <input type="hidden" name="date" value={day.date} />
                           <input type="hidden" name="slot" value={meal.slot} />
                           <input type="hidden" name="name" value={meal.name} />
                           <input type="hidden" name="servings" value={meal.servings} />

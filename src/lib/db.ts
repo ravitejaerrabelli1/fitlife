@@ -145,6 +145,7 @@ CREATE TABLE IF NOT EXISTS workout_sessions (
   duration_min INTEGER,
   notes TEXT NOT NULL DEFAULT '',
   substitutions TEXT NOT NULL DEFAULT '{}',
+  plan TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL
 );
 
@@ -220,6 +221,11 @@ const ADDED_COLUMNS: { table: string; column: string; definition: string }[] = [
     table: "workout_sessions",
     column: "substitutions",
     definition: "TEXT NOT NULL DEFAULT '{}'",
+  },
+  {
+    table: "workout_sessions",
+    column: "plan",
+    definition: "TEXT NOT NULL DEFAULT ''",
   },
 ];
 

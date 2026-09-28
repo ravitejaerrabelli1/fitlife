@@ -230,6 +230,7 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
         </div>
         <fieldset className="mt-3">
           <legend className="mb-2 text-sm font-medium">Equipment</legend>
+          <input type="hidden" name="equipmentSubmitted" value="1" />
           <div className="flex flex-wrap gap-3">
             {EQUIPMENT.map((item) => (
               <label key={item} className="flex items-center gap-2 text-sm">

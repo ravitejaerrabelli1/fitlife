@@ -19,8 +19,9 @@ export interface TrackerExercise {
   restSeconds: number;
   notes: string;
   suggestion: string;
-  suggestedWeightKg?: number;
-  loggedSets: { setNumber: number; weightKg: number; reps: number }[];
+  /** Already converted to the profile's display unit. */
+  suggestedWeight?: number;
+  loggedSets: { setNumber: number; weight: number; reps: number }[];
   alternatives: { id: string; name: string }[];
 }
 
@@ -157,7 +158,7 @@ export function WorkoutTracker({
                             step="0.5"
                             min="0"
                             defaultValue={
-                              logged?.weightKg ?? exercise.suggestedWeightKg ?? ""
+                              logged?.weight ?? exercise.suggestedWeight ?? ""
                             }
                             aria-label={`Weight for set ${setNumber} (${weightUnit})`}
                             className="w-24"

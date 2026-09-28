@@ -11,8 +11,10 @@ import {
   availableEquipmentTags,
   generateWorkoutProgram,
   suggestProgression,
+  type WorkoutExercise,
 } from "@/lib/planner/workouts";
 import { requireOnboardedProfile } from "@/lib/session";
+import { kgToLb, round } from "@/lib/calc/units";
 import type { Equipment, Experience, Goal } from "@/lib/calc/types";
 
 interface SessionRow {
@@ -22,6 +24,29 @@ interface SessionRow {
   status: string;
   date: string;
   substitutions: string;
+  plan: string;
+}
+
+interface SessionPlan {
+  focus: string;
+  exercises: WorkoutExercise[];
+}
+
+/** Sessions started before the snapshot column store no plan of their own. */
+function parsePlan(raw: string): SessionPlan | null {
+  try {
+    const parsed: unknown = JSON.parse(raw || "");
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      Array.isArray((parsed as SessionPlan).exercises)
+    ) {
+      return parsed as SessionPlan;
+    }
+  } catch {
+    // Fall through to regenerating from the current profile.
+  }
+  return null;
 }
 
 function parseSubstitutions(raw: string): Record<string, string> {
@@ -42,7 +67,7 @@ export default async function WorkoutSessionPage({
   const { user, profile } = await requireOnboardedProfile();
   const { id } = await params;
   const session = get<SessionRow>(
-    "SELECT id, name, day_key, status, date, substitutions FROM workout_sessions WHERE id = ? AND user_id = ?",
+    "SELECT id, name, day_key, status, date, substitutions, plan FROM workout_sessions WHERE id = ? AND user_id = ?",
     [id, user.id],
   );
   if (!session) notFound();
@@ -50,16 +75,28 @@ export default async function WorkoutSessionPage({
   const equipment = (profile.equipment.length
     ? profile.equipment
     : ["bodyweight"]) as Equipment[];
-  const program = generateWorkoutProgram({
-    goal: (profile.goal ?? "maintain") as Goal,
-    experience: (profile.experience ?? "beginner") as Experience,
-    daysPerWeek: profile.workout_days ?? 3,
-    sessionMinutes: profile.workout_minutes ?? 45,
-    equipment,
-  });
+  const snapshot = parsePlan(session.plan);
   const day =
-    program.days.find((item) => item.key === session.day_key) ?? program.days[0];
+    snapshot ??
+    (() => {
+      const program = generateWorkoutProgram({
+        goal: (profile.goal ?? "maintain") as Goal,
+        experience: (profile.experience ?? "beginner") as Experience,
+        daysPerWeek: profile.workout_days ?? 3,
+        sessionMinutes: profile.workout_minutes ?? 45,
+        equipment,
+      });
+      const match =
+        program.days.find((item) => item.key === session.day_key) ??
+        program.days[0];
+      return { focus: match.focus, exercises: match.exercises };
+    })();
   const tags = availableEquipmentTags(equipment);
+  const completed = session.status === "complete";
+  const imperial = profile.units === "imperial";
+  const weightUnit = imperial ? "lb" : "kg";
+  // Weights are stored in kg; the tracker inputs work in the profile's unit.
+  const toDisplay = (kg: number) => round(imperial ? kgToLb(kg) : kg, 1);
 
   const loggedSets = all<{
     exercise_id: string;
@@ -72,6 +109,11 @@ export default async function WorkoutSessionPage({
   );
 
   const substitutions = parseSubstitutions(session.substitutions);
+  const activeIds = new Set(
+    day.exercises.map(
+      (planned) => substitutions[planned.exerciseId] ?? planned.exerciseId,
+    ),
+  );
 
   const exercises: TrackerExercise[] = day.exercises.map((planned) => {
     const base = getExercise(planned.exerciseId);
@@ -96,17 +138,21 @@ export default async function WorkoutSessionPage({
       restSeconds: planned.restSeconds,
       notes: planned.notes,
       suggestion: progression.message,
-      suggestedWeightKg: progression.suggestedWeightKg,
+      suggestedWeight:
+        progression.suggestedWeightKg == null
+          ? undefined
+          : toDisplay(progression.suggestedWeightKg),
       loggedSets: loggedSets
         .filter((set) => set.exercise_id === activeId)
         .map((set) => ({
           setNumber: set.set_number,
-          weightKg: set.weight_kg,
+          weight: toDisplay(set.weight_kg),
           reps: set.reps,
         })),
       alternatives: EXERCISES.filter(
         (candidate) =>
           candidate.id !== planned.exerciseId &&
+          !activeIds.has(candidate.id) &&
           base != null &&
           candidate.group === base.group &&
           candidate.equipment.some((tag) => tags.includes(tag)),
@@ -126,20 +172,37 @@ export default async function WorkoutSessionPage({
         </p>
       </div>
 
-      {session.status === "complete" ? (
+      {completed ? (
         <Card>
           <p className="text-sm">
             This session is finished. Sets are saved and will feed your progression
             suggestions.
           </p>
+          <ul className="mt-3 space-y-2 text-sm">
+            {exercises.map((exercise) => (
+              <li key={exercise.exerciseId}>
+                <span className="font-medium">{exercise.activeName}</span>
+                <span className="text-muted">
+                  {" "}
+                  —{" "}
+                  {exercise.loggedSets.length
+                    ? exercise.loggedSets
+                        .sort((a, b) => a.setNumber - b.setNumber)
+                        .map((set) => `${set.weight}${weightUnit} × ${set.reps}`)
+                        .join(", ")
+                    : "no sets logged"}
+                </span>
+              </li>
+            ))}
+          </ul>
         </Card>
-      ) : null}
-
-      <WorkoutTracker
-        sessionId={session.id}
-        exercises={exercises}
-        weightUnit={profile.units === "imperial" ? "lb" : "kg"}
-      />
+      ) : (
+        <WorkoutTracker
+          sessionId={session.id}
+          exercises={exercises}
+          weightUnit={weightUnit}
+        />
+      )}
 
       <Disclaimer />
     </div>
