@@ -114,6 +114,7 @@ export function WorkoutTracker({
                     <label className="block text-xs text-muted">
                       Swap for
                       <Select
+                        key={activeId}
                         className="mt-1"
                         name="substituteId"
                         defaultValue={replacedWith}

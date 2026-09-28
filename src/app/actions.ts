@@ -83,6 +83,12 @@ export async function signOutAction(): Promise<void> {
   redirect("/signin");
 }
 
+export async function setThemeAction(theme: string): Promise<void> {
+  const user = await requireSession();
+  if (theme !== "light" && theme !== "dark" && theme !== "system") return;
+  updateProfile(user.id, { theme });
+}
+
 export async function requestPasswordResetAction(
   _prev: ActionResult | null,
   formData: FormData,

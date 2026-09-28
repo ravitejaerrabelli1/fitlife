@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BottomNav } from "@/components/bottom-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle, type ThemePreference } from "@/components/theme-toggle";
+import { getProfile } from "@/lib/profile";
 import { requireSession } from "@/lib/session";
 
 export default async function AppLayout({
@@ -9,13 +10,15 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const user = await requireSession();
+  const profile = getProfile(user.id);
+  const theme = (profile?.theme ?? "system") as ThemePreference;
 
   return (
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
           <Link href="/dashboard" className="font-semibold tracking-tight">
-            Fit<span className="text-brand">Forge</span>
+            Fit<span className="text-brand">Life</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link
@@ -32,7 +35,7 @@ export default async function AppLayout({
                 Admin
               </Link>
             ) : null}
-            <ThemeToggle />
+            <ThemeToggle preference={theme} />
           </div>
         </div>
       </header>
