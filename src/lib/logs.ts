@@ -306,8 +306,14 @@ export function learnedBoosts(userId: string, limit = 8): string[] {
   ).map((row) => row.value);
 }
 
+/** Strips the amount suffix added by gram logging, e.g. "Idli (80 g)" -> "Idli". */
+function baseFoodName(name: string): string {
+  return name.replace(/ \(\d+(?:\.\d+)? g\)$/, "");
+}
+
+/** Most recently logged foods, one entry (the latest portion) per food. */
 export function recentFoods(userId: string, limit = 12) {
-  return all<{
+  const rows = all<{
     name: string;
     calories: number;
     protein_g: number;
@@ -317,9 +323,18 @@ export function recentFoods(userId: string, limit = 12) {
   }>(
     `SELECT name, calories, protein_g, carbs_g, fat_g, fiber_g, MAX(created_at) AS last_used
      FROM nutrition_logs WHERE user_id = ?
-     GROUP BY name ORDER BY last_used DESC LIMIT ?`,
-    [userId, limit],
+     GROUP BY name ORDER BY last_used DESC`,
+    [userId],
   );
+  const seen = new Set<string>();
+  return rows
+    .filter((row) => {
+      const base = baseFoodName(row.name);
+      if (seen.has(base)) return false;
+      seen.add(base);
+      return true;
+    })
+    .slice(0, limit);
 }
 
 export function customFoods(userId: string) {

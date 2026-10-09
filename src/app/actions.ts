@@ -349,7 +349,7 @@ export async function quickLogFoodAction(formData: FormData): Promise<void> {
   const user = await requireSession();
   const servings = num(formData.get("servings")) ?? 1;
   const name = str(formData.get("name"));
-  if (!name) return;
+  if (!name || !(servings > 0)) return;
   addNutritionLog(user.id, {
     meal: str(formData.get("meal")) || "lunch",
     name,
