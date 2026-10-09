@@ -47,17 +47,23 @@ function findFood(name: string): FoodItem | undefined {
   );
 }
 
-/** Serving multiplier for an amount in grams, or one serving when grams are unknown. */
-function factorFor(food: FoodItem, grams: string): number {
+/**
+ * Serving multiplier for an amount in grams: one serving when no amount is given,
+ * undefined when the food's serving has no gram weight to scale from.
+ */
+function factorFor(food: FoodItem, grams: string): number | undefined {
+  if (grams.trim() === "") return 1;
   const perServing = servingGrams(food.serving);
   const amount = Number(grams);
-  return perServing && amount > 0 ? amount / perServing : 1;
+  if (!perServing || !(amount >= 0)) return undefined;
+  return amount / perServing;
 }
 
 export function ManualFoodForm({ defaultMeal }: { defaultMeal: string }) {
   const [name, setName] = useState("");
   const [grams, setGrams] = useState("");
   const [macros, setMacros] = useState<Macros>(EMPTY_MACROS);
+  const [autofilled, setAutofilled] = useState(false);
   const match = findFood(name);
 
   const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
@@ -67,6 +73,7 @@ export function ManualFoodForm({ defaultMeal }: { defaultMeal: string }) {
         setName("");
         setGrams("");
         setMacros(EMPTY_MACROS);
+        setAutofilled(false);
       }
       return result;
     },
@@ -75,10 +82,19 @@ export function ManualFoodForm({ defaultMeal }: { defaultMeal: string }) {
 
   const refill = (nextName: string, nextGrams: string) => {
     const food = findFood(nextName);
-    if (food) setMacros(macrosFor(food, factorFor(food, nextGrams)));
+    const factor = food ? factorFor(food, nextGrams) : undefined;
+    if (food && factor !== undefined) {
+      setMacros(macrosFor(food, factor));
+      setAutofilled(true);
+    } else if (autofilled) {
+      setMacros(EMPTY_MACROS);
+      setAutofilled(false);
+    }
   };
-  const setMacro = (key: keyof Macros) => (event: ChangeEvent<HTMLInputElement>) =>
+  const setMacro = (key: keyof Macros) => (event: ChangeEvent<HTMLInputElement>) => {
     setMacros({ ...macros, [key]: event.target.value });
+    setAutofilled(false);
+  };
 
   const matchGrams = match ? servingGrams(match.serving) : undefined;
   const loggedName = grams && Number(grams) > 0 ? `${name.trim()} (${grams} g)` : name.trim();
@@ -121,7 +137,7 @@ export function ManualFoodForm({ defaultMeal }: { defaultMeal: string }) {
           match
             ? matchGrams
               ? `Using ${match.name}: ${match.calories} kcal per ${match.serving}. Edit the numbers below if your portion differs.`
-              : `Using ${match.name}: values are for ${match.serving}.`
+              : `${match.name} is listed per ${match.serving}, not by weight. Leave grams empty to fill one serving, or enter the numbers yourself.`
             : "Type a food name to fill in the numbers, or enter them yourself."
         }
       >
