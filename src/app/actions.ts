@@ -104,7 +104,7 @@ export async function requestPasswordResetAction(
     return {
       ok: true,
       message:
-        "If an account exists for that email, a reset link has been created.",
+        "If an account exists for that email, a reset link has been created. Email delivery isn't set up yet, so ask your FitLife admin to send it to you.",
     };
   }
   const token = newId().replaceAll("-", "");
@@ -112,12 +112,13 @@ export async function requestPasswordResetAction(
     "INSERT INTO password_resets (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
     [token, user.id, nowIso(), new Date(Date.now() + 3600_000).toISOString()],
   );
-  // Email delivery is not configured; the link is only written to the server log.
-  console.info(`[password reset] /reset/${token}`);
+  if (process.env.NODE_ENV === "development") {
+    console.info(`[password reset] /reset/${token}`);
+  }
   return {
     ok: true,
     message:
-      "If an account exists for that email, a reset link has been created.",
+      "If an account exists for that email, a reset link has been created. Email delivery isn't set up yet, so ask your FitLife admin to send it to you.",
   };
 }
 
@@ -281,8 +282,8 @@ export async function updateProfileAction(
   }
   if (typeof patch.calorie_override === "number") {
     const override = patch.calorie_override;
-    if (override < 800 || override > 8000) {
-      return { ok: false, error: "Calorie override must be 800–8000 kcal." };
+    if (override < 1000 || override > 6000) {
+      return { ok: false, error: "Calorie override must be 1000–6000 kcal." };
     }
   }
   if (formData.has("allergies")) patch.allergies = str(formData.get("allergies"));
@@ -638,8 +639,8 @@ export async function substituteExerciseAction(formData: FormData): Promise<void
   const plannedId = str(formData.get("plannedExerciseId"));
   const substituteId = str(formData.get("substituteId"));
   if (!plannedId) return;
-  const owned = get<{ substitutions: string; status: string }>(
-    "SELECT substitutions, status FROM workout_sessions WHERE id = ? AND user_id = ?",
+  const owned = get<{ substitutions: string; status: string; plan: string }>(
+    "SELECT substitutions, status, plan FROM workout_sessions WHERE id = ? AND user_id = ?",
     [sessionId, user.id],
   );
   if (!owned || owned.status === "complete") return;
@@ -654,10 +655,20 @@ export async function substituteExerciseAction(formData: FormData): Promise<void
     substitutions = {};
   }
 
-  const takenElsewhere = Object.entries(substitutions).some(
-    ([slot, active]) => slot !== plannedId && active === substituteId,
+  let plannedIds: string[] = Object.keys(substitutions);
+  try {
+    const plan: unknown = JSON.parse(owned.plan || "null");
+    if (plan && typeof plan === "object" && "exercises" in plan && Array.isArray(plan.exercises)) {
+      plannedIds = plan.exercises.map((item: { exerciseId: string }) => item.exerciseId);
+    }
+  } catch {
+    // Legacy sessions without a snapshot only know their substitutions.
+  }
+  const target = substituteId || plannedId;
+  const takenElsewhere = plannedIds.some(
+    (slot) => slot !== plannedId && (substitutions[slot] ?? slot) === target,
   );
-  if (substituteId && takenElsewhere) return;
+  if (takenElsewhere) return;
 
   const previousId = substitutions[plannedId] ?? plannedId;
   if (substituteId && getExercise(substituteId)) {

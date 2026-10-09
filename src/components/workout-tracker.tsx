@@ -23,6 +23,7 @@ export interface TrackerExercise {
   suggestedWeight?: number;
   loggedSets: { setNumber: number; weight: number; reps: number }[];
   alternatives: { id: string; name: string }[];
+  plannedTakenElsewhere: boolean;
 }
 
 export function WorkoutTracker({
@@ -121,7 +122,10 @@ export function WorkoutTracker({
                         defaultValue={replacedWith}
                         onChange={(event) => event.currentTarget.form?.requestSubmit()}
                       >
-                        <option value="">{exercise.name} (as planned)</option>
+                        <option value="" disabled={exercise.plannedTakenElsewhere}>
+                          {exercise.name} (as planned)
+                          {exercise.plannedTakenElsewhere ? " — in use" : ""}
+                        </option>
                         {exercise.alternatives.map((item) => (
                           <option key={item.id} value={item.id}>
                             {item.name}
@@ -155,7 +159,7 @@ export function WorkoutTracker({
                           <Input
                             name="weight"
                             type="number"
-                            step="0.5"
+                            step="any"
                             min="0"
                             defaultValue={
                               logged?.weight ?? exercise.suggestedWeight ?? ""

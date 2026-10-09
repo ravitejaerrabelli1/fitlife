@@ -6,7 +6,7 @@ export default function ResetPage() {
       <h1 className="text-2xl font-semibold">Reset your password</h1>
       <p className="mt-1 text-sm text-muted">
         Enter the email on your account and we will create a one-hour reset
-        link.
+        link. Your FitLife admin can send it to you.
       </p>
       <div className="mt-6">
         <RequestResetForm />

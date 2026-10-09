@@ -65,8 +65,19 @@ describe("meal planner", () => {
         recipe.ingredients.every(
           (ingredient) =>
             ingredient.category !== "dairy" &&
-            !/yogurt|paneer|cheese|butter|cream|whey/i.test(ingredient.name),
+            !/yogurt|paneer|cheese|(?<!peanut |nut )butter|(?<!coconut )cream|whey/i.test(
+              ingredient.name,
+            ),
         ),
+      ),
+    ).toBe(true);
+  });
+
+  it("does not treat plant milks as dairy for a milk allergy", () => {
+    const milkFree = filterRecipes({ ...basePreferences, allergies: ["milk"] });
+    expect(
+      milkFree.some((recipe) =>
+        recipe.ingredients.some((ingredient) => ingredient.name === "Coconut milk"),
       ),
     ).toBe(true);
   });
@@ -164,6 +175,19 @@ describe("workout planner", () => {
       repRange: "8-12",
     });
     expect(partial.action).toBe("increase_reps");
+  });
+
+  it("formats progression messages in the caller's unit", () => {
+    const suggestion = suggestProgression({
+      history: [
+        { weightKg: 40, reps: 12, date: "2026-01-01" },
+        { weightKg: 40, reps: 9, date: "2026-01-08" },
+      ],
+      repRange: "8-12",
+      formatWeight: (kg) => `${Math.round(kg * 2.20462)} lb`,
+    });
+    expect(suggestion.message).toContain("88 lb");
+    expect(suggestion.message).not.toContain("kg");
   });
 
   it("holds load when pain or a form issue is reported", () => {

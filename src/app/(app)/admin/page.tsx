@@ -18,6 +18,13 @@ export default async function AdminPage() {
   const [sessions] = all<{ count: number }>(
     "SELECT COUNT(*) AS count FROM workout_sessions",
   );
+  const resets = all<{ token: string; email: string; expires_at: string }>(
+    `SELECT r.token, u.email, r.expires_at
+       FROM password_resets r JOIN users u ON u.id = r.user_id
+      WHERE r.used = 0 AND r.expires_at > ?
+      ORDER BY r.created_at DESC`,
+    [new Date().toISOString()],
+  );
 
   return (
     <div className="space-y-5">
@@ -47,6 +54,32 @@ export default async function AdminPage() {
           <Stat label="Food logs" value={logs?.count ?? 0} />
           <Stat label="Workout sessions" value={sessions?.count ?? 0} />
         </dl>
+      </Card>
+
+      <Card>
+        <SectionHeading title="Password reset requests" />
+        <p className="mb-3 text-sm text-muted">
+          Email delivery is not configured. Send each link to its owner through
+          a channel you trust; links expire after one hour and work once.
+        </p>
+        {resets.length ? (
+          <ul className="space-y-2 text-sm">
+            {resets.map((reset) => (
+              <li key={reset.token} className="break-all">
+                <span className="font-medium">{reset.email}</span>
+                <span className="text-muted">
+                  {" "}
+                  — expires {new Date(reset.expires_at).toLocaleTimeString()}
+                </span>
+                <div>
+                  <code>/reset/{reset.token}</code>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted">No active requests.</p>
+        )}
       </Card>
     </div>
   );

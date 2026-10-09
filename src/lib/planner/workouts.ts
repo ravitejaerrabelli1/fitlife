@@ -466,8 +466,10 @@ export function suggestProgression(input: {
   history: SetRecord[];
   repRange: string;
   reportedPainOrFormIssue?: boolean;
+  formatWeight?: (kg: number) => string;
 }): ProgressionSuggestion {
   const { history, repRange, reportedPainOrFormIssue } = input;
+  const format = input.formatWeight ?? ((kg: number) => `${round1(kg)} kg`);
   if (reportedPainOrFormIssue) {
     return {
       message:
@@ -491,7 +493,7 @@ export function suggestProgression(input: {
   if (hitTop) {
     const increment = heaviest >= 60 ? 2.5 : heaviest >= 20 ? 2 : 1;
     return {
-      message: `You completed ${maxReps} reps on every set. Try ${round1(heaviest + increment)} kg next session and work back up the rep range.`,
+      message: `You completed ${maxReps} reps on every set. Try ${format(heaviest + increment)} next session and work back up the rep range.`,
       action: "increase_load",
       suggestedWeightKg: round1(heaviest + increment),
       suggestedReps: minReps,
@@ -500,7 +502,7 @@ export function suggestProgression(input: {
 
   const bestReps = Math.max(...latestSets.map((set) => set.reps));
   return {
-    message: `Stay at ${round1(heaviest)} kg and aim for ${Math.min(maxReps, bestReps + 1)} reps on your first set.`,
+    message: `Stay at ${format(heaviest)} and aim for ${Math.min(maxReps, bestReps + 1)} reps on your first set.`,
     action: "increase_reps",
     suggestedWeightKg: round1(heaviest),
     suggestedReps: Math.min(maxReps, bestReps + 1),
