@@ -104,7 +104,7 @@ export async function requestPasswordResetAction(
     return {
       ok: true,
       message:
-        "If an account exists for that email, a reset link has been created.",
+        "If an account exists for that email, a reset link has been created. Email delivery isn't set up yet, so ask your FitLife admin to send it to you.",
     };
   }
   const token = newId().replaceAll("-", "");
@@ -118,7 +118,7 @@ export async function requestPasswordResetAction(
   return {
     ok: true,
     message:
-      "If an account exists for that email, a reset link has been created.",
+      "If an account exists for that email, a reset link has been created. Email delivery isn't set up yet, so ask your FitLife admin to send it to you.",
   };
 }
 

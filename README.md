@@ -28,7 +28,8 @@ Open http://localhost:3000, create an account, and complete onboarding.
 
 The database is created on first use at `data/fitlife.db`. Override with
 `DATABASE_FILE`. Set `ADMIN_EMAIL` before signing up to give that account the admin
-role.
+role. Email delivery is not configured, so active password-reset links are listed
+on the admin page (`/admin`) for the admin to pass on.
 
 ## Checks
 
