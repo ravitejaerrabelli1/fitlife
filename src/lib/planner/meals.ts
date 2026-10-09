@@ -183,8 +183,17 @@ const ALLERGEN_TERMS: Record<string, string[]> = {
 
 const DAIRY_ALLERGENS = new Set(["milk", "dairy", "lactose"]);
 
+const PLANT_DAIRY_ALTERNATIVES =
+  /\b(coconut|soy|soya|almond|oat|rice|cashew|peanut|nut|cocoa) (milk|cream|yogurt|yoghurt|butter)\b/g;
+
 function hasAllergen(recipe: Recipe, allergy: string): boolean {
-  if (DAIRY_ALLERGENS.has(allergy) && hasDairy(recipe)) return true;
+  if (DAIRY_ALLERGENS.has(allergy)) {
+    if (hasDairy(recipe)) return true;
+    return recipe.ingredients.some((ingredient) => {
+      const name = ingredient.name.toLowerCase().replace(PLANT_DAIRY_ALTERNATIVES, "");
+      return DAIRY_TERMS.some((term) => name.includes(term));
+    });
+  }
   const terms = ALLERGEN_TERMS[allergy] ?? [allergy];
   return hasIngredient(recipe, terms);
 }

@@ -109,11 +109,14 @@ export default async function WorkoutSessionPage({
   );
 
   const substitutions = parseSubstitutions(session.substitutions);
-  const activeIds = new Set(
-    day.exercises.map(
-      (planned) => substitutions[planned.exerciseId] ?? planned.exerciseId,
-    ),
+  const activeBySlot = new Map(
+    day.exercises.map((planned) => [
+      planned.exerciseId,
+      substitutions[planned.exerciseId] ?? planned.exerciseId,
+    ]),
   );
+  const activeInOtherSlot = (slot: string, exerciseId: string) =>
+    [...activeBySlot].some(([other, active]) => other !== slot && active === exerciseId);
 
   const exercises: TrackerExercise[] = day.exercises.map((planned) => {
     const base = getExercise(planned.exerciseId);
@@ -127,6 +130,7 @@ export default async function WorkoutSessionPage({
         date: set.date,
       })),
       repRange: planned.reps,
+      formatWeight: (kg) => `${toDisplay(kg)} ${weightUnit}`,
     });
     return {
       exerciseId: planned.exerciseId,
@@ -152,13 +156,14 @@ export default async function WorkoutSessionPage({
       alternatives: EXERCISES.filter(
         (candidate) =>
           candidate.id !== planned.exerciseId &&
-          !activeIds.has(candidate.id) &&
+          !activeInOtherSlot(planned.exerciseId, candidate.id) &&
           base != null &&
           candidate.group === base.group &&
           candidate.equipment.some((tag) => tags.includes(tag)),
       )
         .slice(0, 6)
         .map((candidate) => ({ id: candidate.id, name: candidate.name })),
+      plannedTakenElsewhere: activeInOtherSlot(planned.exerciseId, planned.exerciseId),
     };
   });
 
