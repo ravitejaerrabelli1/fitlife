@@ -9,8 +9,8 @@ import {
   SectionHeading,
   Select,
 } from "@/components/ui";
-import { CustomFoodForm, ManualFoodForm } from "@/components/food-forms";
-import { deleteFoodLogAction, quickLogFoodAction } from "@/app/actions";
+import { CustomFoodForm, FoodLogRow, ManualFoodForm } from "@/components/food-forms";
+import { deleteFoodLogAction } from "@/app/actions";
 import {
   customFoods,
   getNutritionLogs,
@@ -192,7 +192,10 @@ export default async function FoodPage({
       ) : null}
 
       <Card>
-        <SectionHeading title="Quick entry" subtitle="Log something not in the list." />
+        <SectionHeading
+          title="Quick entry"
+          subtitle="Type a food and grams to fill in the nutrition, or enter your own numbers."
+        />
         <ManualFoodForm defaultMeal={meal} />
       </Card>
 
@@ -245,41 +248,11 @@ export default async function FoodPage({
 
 function FoodRow({ item, meal }: { item: FoodItem; meal: string }) {
   return (
-    <form
-      action={quickLogFoodAction}
-      className="flex flex-wrap items-center justify-between gap-2"
-    >
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">
-          {item.name}{" "}
-          {item.restaurant ? <Badge tone="warn">estimate</Badge> : null}
-        </p>
-        <p className="text-xs text-muted">
-          {item.serving} · {item.calories} kcal · {item.proteinG}p {item.carbsG}c{" "}
-          {item.fatG}f
-        </p>
-      </div>
-      <input type="hidden" name="name" value={item.name} />
-      <input type="hidden" name="foodId" value={item.id} />
-      <input type="hidden" name="meal" value={meal} />
-      <input type="hidden" name="calories" value={item.calories} />
-      <input type="hidden" name="protein" value={item.proteinG} />
-      <input type="hidden" name="carbs" value={item.carbsG} />
-      <input type="hidden" name="fat" value={item.fatG} />
-      <input type="hidden" name="fiber" value={item.fiberG} />
-      <Input
-        name="servings"
-        type="number"
-        step="0.25"
-        min="0.25"
-        defaultValue={1}
-        aria-label={`Servings of ${item.name}`}
-        className="w-20"
-      />
-      <Button type="submit" variant="secondary" className="px-3 py-1.5 text-xs">
-        Log
-      </Button>
-    </form>
+    <FoodLogRow
+      item={item}
+      meal={meal}
+      badge={item.restaurant ? <Badge tone="warn">estimate</Badge> : null}
+    />
   );
 }
 

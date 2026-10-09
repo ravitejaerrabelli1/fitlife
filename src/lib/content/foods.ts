@@ -26,6 +26,10 @@ function food(
   };
 }
 
+const IN = "Indian (typical)";
+const SI = ["indian", "south_indian"];
+const NI = ["indian"];
+
 export const FOODS: FoodItem[] = [
   food("chicken-breast", "Chicken breast, cooked", "100 g", 165, 31, 0, 3.6, 0, ["protein"]),
   food("chicken-thigh", "Chicken thigh, cooked", "100 g", 209, 26, 0, 11, 0, ["protein"]),
@@ -71,6 +75,53 @@ export const FOODS: FoodItem[] = [
   food("protein-bar", "Protein bar", "1 bar (60 g)", 220, 20, 22, 7, 5, ["snack"]),
   food("dark-chocolate", "Dark chocolate 85%", "20 g", 120, 2, 6, 10, 2, ["snack"]),
   food("hummus", "Hummus", "50 g", 133, 4, 7, 10, 3, ["vegan", "snack"]),
+
+  // Typical home-style Indian dishes; values vary with recipe and oil used.
+  food("idli", "Idli", "1 piece (40 g)", 58, 2, 12, 0.2, 0.5, SI, IN),
+  food("plain-dosa", "Plain dosa", "1 medium (80 g)", 168, 3.9, 29, 3.7, 0.9, SI, IN),
+  food("masala-dosa", "Masala dosa", "1 dosa (180 g)", 360, 7, 50, 15, 3, SI, IN),
+  food("rava-dosa", "Rava dosa", "1 dosa (90 g)", 190, 3.5, 26, 8, 1, SI, IN),
+  food("pesarattu", "Pesarattu (green gram dosa)", "1 dosa (100 g)", 180, 9, 26, 4.5, 4, SI, IN),
+  food("uttapam", "Onion uttapam", "1 piece (120 g)", 210, 5.5, 35, 5, 2, SI, IN),
+  food("appam", "Appam", "1 piece (60 g)", 120, 2, 22, 2.5, 0.5, SI, IN),
+  food("medu-vada", "Medu vada", "1 piece (50 g)", 140, 4.5, 14, 7.5, 2, SI, IN),
+  food("paniyaram", "Kuzhi paniyaram", "4 pieces (100 g)", 180, 4, 28, 6, 1.5, SI, IN),
+  food("puttu", "Puttu", "1 cup (100 g)", 180, 3.5, 33, 4, 2, SI, IN),
+  food("upma", "Rava upma", "1 cup (200 g)", 250, 6, 38, 8, 2, SI, IN),
+  food("ven-pongal", "Ven pongal", "1 cup (200 g)", 300, 8, 40, 12, 2, SI, IN),
+  food("sambar", "Sambar", "1 bowl (150 g)", 98, 4.5, 13.5, 3, 3.8, SI, IN),
+  food("rasam", "Rasam", "1 bowl (150 g)", 60, 2, 8, 2.3, 1, SI, IN),
+  food("coconut-chutney", "Coconut chutney", "2 tbsp (30 g)", 60, 0.8, 2.5, 5.4, 1.5, SI, IN),
+  food("lemon-rice", "Lemon rice", "1 cup (180 g)", 290, 5, 48, 9, 2, SI, IN),
+  food("curd-rice", "Curd rice", "1 cup (200 g)", 260, 7, 40, 8, 1, [...SI, "dairy"], IN),
+  food("pulihora", "Tamarind rice (pulihora)", "1 cup (180 g)", 320, 5, 50, 11, 2, SI, IN),
+  food("bisi-bele-bath", "Bisi bele bath", "1 cup (250 g)", 330, 10, 50, 10, 6, SI, IN),
+  food("ragi-mudde", "Ragi mudde (ragi ball)", "1 ball (150 g)", 210, 4.5, 45, 1.2, 5, SI, IN),
+  food("avial", "Avial", "1 cup (150 g)", 150, 3, 12, 10, 4, SI, IN),
+  food("poriyal", "Vegetable poriyal / thoran", "1 cup (100 g)", 90, 2.5, 8, 5.5, 3, SI, IN),
+  food("kerala-parotta", "Kerala parotta", "1 piece (90 g)", 290, 5.5, 40, 12, 1.5, SI, IN),
+  food("chicken-biryani", "Chicken biryani", "1 plate (300 g)", 540, 24, 66, 20, 2, SI, IN),
+  food("mutton-biryani", "Mutton biryani", "1 plate (300 g)", 600, 27, 63, 26, 2, SI, IN),
+  food("egg-biryani", "Egg biryani", "1 plate (300 g)", 500, 18, 66, 18, 2, SI, IN),
+  food("veg-biryani", "Veg biryani", "1 plate (300 g)", 450, 9, 72, 14, 5, SI, IN),
+  food("chicken-65", "Chicken 65", "100 g", 250, 22, 9, 14, 0.5, SI, IN),
+  food("chicken-curry", "Chicken curry", "1 bowl (200 g)", 300, 26, 8, 18, 2, SI, IN),
+  food("fish-curry", "Fish curry", "1 bowl (200 g)", 240, 22, 8, 13, 1.5, SI, IN),
+  food("payasam", "Payasam (kheer)", "1 cup (150 g)", 250, 6, 38, 8, 0.5, [...SI, "dairy"], IN),
+  food("banana-chips", "Banana chips", "30 g", 155, 0.7, 17, 10, 2, SI, IN),
+  food("filter-coffee", "Filter coffee with milk and sugar", "1 cup (150 ml)", 80, 2.5, 11, 3, 0, [...SI, "dairy"], IN),
+  food("chapati", "Chapati / roti", "1 piece (40 g)", 120, 3.5, 18, 3.7, 2, NI, IN),
+  food("dal-tadka", "Dal tadka", "1 bowl (150 g)", 165, 9, 21, 5, 5, NI, IN),
+  food("chole", "Chole (chickpea curry)", "1 bowl (150 g)", 210, 9, 27, 7.5, 8, NI, IN),
+  food("rajma", "Rajma (kidney bean curry)", "1 bowl (150 g)", 190, 9, 27, 5, 8, NI, IN),
+  food("paneer", "Paneer", "100 g", 265, 18, 1.2, 21, 0, [...NI, "dairy"], IN),
+  food("palak-paneer", "Palak paneer", "1 bowl (150 g)", 270, 12, 9, 21, 3, [...NI, "dairy"], IN),
+  food("poha", "Poha", "1 plate (150 g)", 250, 4.5, 40, 8, 2, NI, IN),
+  food("samosa", "Samosa", "1 piece (100 g)", 260, 4.5, 30, 14, 2.5, NI, IN),
+  food("gulab-jamun", "Gulab jamun", "1 piece (50 g)", 150, 2, 25, 5, 0.3, [...NI, "dairy"], IN),
+  food("masala-chai", "Masala chai with milk and sugar", "1 cup (150 ml)", 80, 2.5, 12, 2.5, 0, [...NI, "dairy"], IN),
+  food("buttermilk", "Buttermilk (chaas)", "1 glass (200 ml)", 40, 2.5, 4, 1.5, 0, [...NI, "dairy"], IN),
+  food("ghee", "Ghee", "1 tsp (5 g)", 45, 0, 0, 5, 0, [...NI, "dairy", "fat"], IN),
 ];
 
 export const RESTAURANT_ESTIMATES: FoodItem[] = [
@@ -252,14 +303,58 @@ export const SUPPLEMENTS: Supplement[] = [
   },
 ];
 
+/** Grams in one serving, when the serving label states them (e.g. "1 piece (40 g)"). */
+export function servingGrams(serving: string): number | undefined {
+  const match = /(\d+(?:\.\d+)?)\s*g\b/i.exec(serving);
+  return match ? Number(match[1]) : undefined;
+}
+
+function normalize(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/** Optimal string alignment distance: edits plus adjacent transpositions. */
+function editDistance(a: string, b: string): number {
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
+  );
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return d[a.length][b.length];
+}
+
+function wordMatches(queryWord: string, words: string[]): boolean {
+  const tolerance = queryWord.length >= 7 ? 2 : queryWord.length >= 4 ? 1 : 0;
+  return words.some(
+    (word) =>
+      word.includes(queryWord) ||
+      (tolerance > 0 && editDistance(queryWord, word) <= tolerance),
+  );
+}
+
+/** Matches every query word against name, brand and tags, tolerating small typos. */
 export function searchFoods(query: string): FoodItem[] {
-  const q = query.trim().toLowerCase();
+  const q = normalize(query);
   const pool = [...FOODS, ...RESTAURANT_ESTIMATES];
   if (!q) return pool.slice(0, 20);
-  return pool.filter(
-    (item) =>
-      item.name.toLowerCase().includes(q) ||
-      item.brand.toLowerCase().includes(q) ||
-      item.tags.some((tag) => tag.includes(q)),
-  );
+  const queryWords = q.split(" ");
+  return pool
+    .map((item) => {
+      const name = normalize(item.name);
+      const words = normalize(
+        [item.name, item.brand, ...item.tags.map((tag) => tag.replaceAll("_", " "))].join(" "),
+      ).split(" ");
+      if (!queryWords.every((word) => wordMatches(word, words))) return null;
+      return { item, rank: name.startsWith(q) ? 0 : name.includes(q) ? 1 : 2 };
+    })
+    .filter((entry): entry is { item: FoodItem; rank: number } => entry != null)
+    .sort((a, b) => a.rank - b.rank)
+    .map((entry) => entry.item);
 }
