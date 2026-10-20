@@ -1,3 +1,4 @@
+import { baseFoodName } from "./content/foods";
 import { all, get, newId, nowIso, run, today } from "./db";
 
 export interface NutritionLogRow {
@@ -304,11 +305,6 @@ export function learnedBoosts(userId: string, limit = 8): string[] {
      WHERE user_id = ? GROUP BY value ORDER BY score DESC LIMIT ?`,
     [userId, limit],
   ).map((row) => row.value);
-}
-
-/** Strips the amount suffix added by gram logging, e.g. "Idli (80 g)" -> "Idli". */
-function baseFoodName(name: string): string {
-  return name.replace(/ \(\d+(?:\.\d+)? g\)$/, "");
 }
 
 /** Most recently logged foods, one entry (the latest portion) per food. */

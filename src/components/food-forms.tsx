@@ -14,7 +14,7 @@ import {
   type AmountUnit,
 } from "@/lib/content/foods";
 import type { FoodItem } from "@/lib/content/types";
-import { Button, Field, Input, Select } from "./ui";
+import { Button, Field, Input, Select, cx } from "./ui";
 
 const MEALS = [
   { value: "breakfast", label: "Breakfast" },
@@ -47,7 +47,7 @@ function suggestFoods(query: string, savedFoods: FoodItem[]): FoodItem[] {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
   const saved = savedFoods.filter((food) => food.name.toLowerCase().includes(q));
-  return [...saved, ...searchFoods(q)].slice(0, 6);
+  return [...saved.slice(0, 3), ...searchFoods(q)].slice(0, 6);
 }
 
 function portionLabel(food: FoodItem, amount: string, unit: AmountUnit): string {
@@ -65,6 +65,7 @@ export function ManualFoodForm({
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<FoodItem | null>(null);
   const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
   const [amount, setAmount] = useState("");
   const [unit, setUnit] = useState<AmountUnit>("g");
   const [manual, setManual] = useState<Macros>(EMPTY_MACROS);
@@ -116,14 +117,24 @@ export function ManualFoodForm({
                 setQuery(event.target.value);
                 setSelected(null);
                 setOpen(true);
+                setActive(0);
               }}
               onFocus={() => setOpen(true)}
               onBlur={() => setOpen(false)}
+              aria-activedescendant={
+                showSuggestions && suggestions.length ? `manual-food-option-${active}` : undefined
+              }
               onKeyDown={(event) => {
                 if (event.key === "Escape") setOpen(false);
-                if (event.key === "Enter" && !selected && suggestions.length && showSuggestions) {
+                if (!showSuggestions || !suggestions.length) return;
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
                   event.preventDefault();
-                  choose(suggestions[0]);
+                  const step = event.key === "ArrowDown" ? 1 : -1;
+                  setActive((active + step + suggestions.length) % suggestions.length);
+                }
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  choose(suggestions[Math.min(active, suggestions.length - 1)]);
                 }
               }}
               required
@@ -135,13 +146,22 @@ export function ManualFoodForm({
                 role="listbox"
                 className="absolute z-20 mt-1 max-h-72 w-[min(22rem,calc(100vw-3rem))] overflow-y-auto rounded-xl border border-border bg-surface shadow-lg"
               >
-                {suggestions.map((food) => (
-                  <li key={food.id} role="option" aria-selected={false}>
+                {suggestions.map((food, index) => (
+                  <li
+                    key={food.id}
+                    id={`manual-food-option-${index}`}
+                    role="option"
+                    aria-selected={index === active}
+                  >
                     <button
                       type="button"
+                      tabIndex={-1}
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => choose(food)}
-                      className="w-full px-3 py-2 text-left hover:bg-surface-muted"
+                      className={cx(
+                        "w-full px-3 py-2 text-left hover:bg-surface-muted",
+                        index === active && "bg-surface-muted",
+                      )}
                     >
                       <span className="block text-sm font-medium">{food.name}</span>
                       <span className="block text-xs text-muted">

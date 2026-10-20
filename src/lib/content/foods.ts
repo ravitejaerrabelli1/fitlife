@@ -386,6 +386,11 @@ export function nutritionFor(
   };
 }
 
+/** Strips the portion suffix added when logging, e.g. "Idli (80 g)" or "Idli (2 × 1 piece (40 g))" -> "Idli". */
+export function baseFoodName(name: string): string {
+  return name.replace(/ \(\d+(?:\.\d+)? (?:g|× .+)\)$/, "");
+}
+
 function normalize(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }

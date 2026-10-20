@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FOODS, nutritionFor, searchFoods, servingGrams } from "./foods";
+import { FOODS, baseFoodName, nutritionFor, searchFoods, servingGrams } from "./foods";
 
 const names = (query: string) => searchFoods(query).map((food) => food.name);
 
@@ -68,5 +68,13 @@ describe("nutritionFor", () => {
   it("rejects grams without a gram basis and non-positive amounts", () => {
     expect(nutritionFor(egg, 50, "g")).toBeUndefined();
     expect(nutritionFor(biryani, 0, "g")).toBeUndefined();
+  });
+});
+
+describe("baseFoodName", () => {
+  it("strips gram and serving portion suffixes", () => {
+    expect(baseFoodName("Idli (80 g)")).toBe("Idli");
+    expect(baseFoodName("Idiyappam (2 × 2 pieces (100 g))")).toBe("Idiyappam");
+    expect(baseFoodName("Omelette (2 eggs)")).toBe("Omelette (2 eggs)");
   });
 });
