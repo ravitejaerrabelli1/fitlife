@@ -171,6 +171,9 @@ export default async function DashboardPage() {
             <LinkButton href="/meal-plan" variant="secondary" className="px-3 py-1.5 text-xs">
               Meal plan
             </LinkButton>
+            <LinkButton href="/recipes" variant="secondary" className="px-3 py-1.5 text-xs">
+              Recipes
+            </LinkButton>
             <LinkButton href="/train" variant="secondary" className="px-3 py-1.5 text-xs">
               Start workout
             </LinkButton>

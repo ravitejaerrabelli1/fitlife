@@ -5,6 +5,7 @@ import {
   Card,
   EmptyState,
   Input,
+  LinkButton,
   ProgressBar,
   SectionHeading,
   Select,
@@ -63,6 +64,17 @@ export default async function FoodPage({
         <p className="text-sm text-muted">
           {Math.round(totals.calories)} of {targets.effectiveCalories} kcal today
         </p>
+        <nav aria-label="Food sections" className="mt-3 flex flex-wrap gap-2">
+          <LinkButton href="/recipes" variant="secondary" className="px-3 py-1.5 text-xs">
+            Recipes
+          </LinkButton>
+          <LinkButton href="/meal-plan" variant="secondary" className="px-3 py-1.5 text-xs">
+            Meal plan
+          </LinkButton>
+          <LinkButton href="/favorites" variant="secondary" className="px-3 py-1.5 text-xs">
+            Favourites
+          </LinkButton>
+        </nav>
       </div>
 
       <Card className="space-y-3">
