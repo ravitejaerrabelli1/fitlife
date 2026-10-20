@@ -102,7 +102,7 @@ export default async function FoodPage({
           <Input
             name="q"
             defaultValue={q}
-            placeholder="Search foods"
+            placeholder="Search 7,800+ foods, e.g. apple, dosa"
             aria-label="Search foods"
             className="min-w-40 flex-1"
           />

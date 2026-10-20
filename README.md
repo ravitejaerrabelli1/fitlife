@@ -51,7 +51,7 @@ npm run build
 - `src/lib/db.ts`, `auth.ts`, `profile.ts`, `logs.ts` — persistence, sessions, logging
 - `src/app/actions.ts` — server actions (each re-checks the session)
 - `src/app/(app)` — authenticated screens: dashboard, food, recipes, meal plan, train,
-  cardio, progress, profile, search, favorites, admin
+  cardio, progress, profile, favorites, admin
 
 ## Notes on the recommendations
 
