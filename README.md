@@ -45,6 +45,8 @@ npm run build
 - `src/lib/calc` — BMR, TDEE, macros, BMI, body fat, weight trends, adaptive
   suggestions, unit conversion (pure functions, unit tested)
 - `src/lib/content` — recipes, exercises, cardio activities, foods, supplements
+- `src/lib/content/usda-foods.json` — ~7,800 everyday foods (nutrition per 100 g) from USDA FoodData
+  Central SR Legacy (public domain). Regenerate with `node scripts/build-usda-foods.mjs <unzipped-csv-folder>`
 - `src/lib/planner` — meal plan, workout program and cardio schedule generators
 - `src/lib/db.ts`, `auth.ts`, `profile.ts`, `logs.ts` — persistence, sessions, logging
 - `src/app/actions.ts` — server actions (each re-checks the session)

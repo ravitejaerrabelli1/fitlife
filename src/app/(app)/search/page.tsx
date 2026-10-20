@@ -3,7 +3,7 @@ import { Button, Card, EmptyState, Input, SectionHeading } from "@/components/ui
 import { EXERCISES } from "@/lib/content/exercises";
 import { RECIPES } from "@/lib/content/recipes";
 import { CARDIO_ACTIVITIES } from "@/lib/content/cardio";
-import { searchFoods } from "@/lib/content/foods";
+import { searchFoods } from "@/lib/content/food-search";
 import { requireSession } from "@/lib/session";
 
 export default async function SearchPage({
@@ -25,7 +25,7 @@ export default async function SearchPage({
           e.targets.some((t) => t.toLowerCase().includes(term)),
       ).slice(0, 8)
     : [];
-  const foods = term ? searchFoods(term).slice(0, 8) : [];
+  const foods = term ? searchFoods(term, 8) : [];
   const cardio = term
     ? CARDIO_ACTIVITIES.filter((a) => a.name.toLowerCase().includes(term)).slice(0, 5)
     : [];

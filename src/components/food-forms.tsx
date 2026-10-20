@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, type ChangeEvent, type ReactNode } from "react";
+import { useActionState, useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   logFoodAction,
   quickLogFoodAction,
@@ -9,7 +9,6 @@ import {
 } from "@/app/actions";
 import {
   nutritionFor,
-  searchFoods,
   servingGrams,
   type AmountUnit,
 } from "@/lib/content/foods";
@@ -43,11 +42,31 @@ function macrosFor(food: FoodItem, factor: number): Macros {
   };
 }
 
-function suggestFoods(query: string, savedFoods: FoodItem[]): FoodItem[] {
+function suggestFoods(query: string, savedFoods: FoodItem[], catalog: FoodItem[]): FoodItem[] {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
   const saved = savedFoods.filter((food) => food.name.toLowerCase().includes(q));
-  return [...saved.slice(0, 3), ...searchFoods(q)].slice(0, 6);
+  return [...saved.slice(0, 3), ...catalog].slice(0, 8);
+}
+
+/** Catalog matches for the query, fetched from the server after a short pause in typing. */
+function useCatalogSearch(query: string): { query: string; foods: FoodItem[] } | null {
+  const [result, setResult] = useState<{ query: string; foods: FoodItem[] } | null>(null);
+  useEffect(() => {
+    if (query.length < 2) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      fetch(`/api/foods?q=${encodeURIComponent(query)}`, { signal: controller.signal })
+        .then((response) => (response.ok ? response.json() : []))
+        .then((foods: FoodItem[]) => setResult({ query, foods }))
+        .catch(() => {});
+    }, 150);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
+  return result;
 }
 
 function portionLabel(food: FoodItem, amount: string, unit: AmountUnit): string {
@@ -84,8 +103,13 @@ export function ManualFoodForm({
     null,
   );
 
-  const suggestions = selected ? [] : suggestFoods(query, savedFoods);
-  const showSuggestions = open && query.trim().length >= 2;
+  const term = selected ? "" : query.trim();
+  const catalog = useCatalogSearch(term);
+  const loading = term.length >= 2 && catalog?.query !== term;
+  const suggestions = selected
+    ? []
+    : suggestFoods(query, savedFoods, catalog?.query === term ? catalog.foods : []);
+  const showSuggestions = open && term.length >= 2;
   const perServing = selected ? servingGrams(selected.serving) : undefined;
   const totals = selected ? nutritionFor(selected, Number(amount), unit) : undefined;
 
@@ -111,7 +135,7 @@ export function ManualFoodForm({
               aria-expanded={showSuggestions}
               aria-controls="manual-food-suggestions"
               aria-autocomplete="list"
-              placeholder="e.g. idli, chicken biryani"
+              placeholder="e.g. apple, chicken biryani, oats"
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
@@ -171,9 +195,11 @@ export function ManualFoodForm({
                     </button>
                   </li>
                 ))}
-                {!suggestions.length ? (
+                {loading ? (
+                  <li className="px-3 py-2 text-xs text-muted">Searching…</li>
+                ) : !suggestions.length ? (
                   <li className="px-3 py-2 text-xs text-muted">
-                    No match for &ldquo;{query.trim()}&rdquo;. Enter the nutrition yourself below.
+                    No match for &ldquo;{term}&rdquo;. Enter the nutrition yourself below.
                   </li>
                 ) : null}
               </ul>

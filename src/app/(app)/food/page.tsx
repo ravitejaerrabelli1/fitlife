@@ -17,7 +17,8 @@ import {
   recentFoods,
   sumLogs,
 } from "@/lib/logs";
-import { RESTAURANT_ESTIMATES, searchFoods } from "@/lib/content/foods";
+import { searchFoods } from "@/lib/content/food-search";
+import { RESTAURANT_ESTIMATES } from "@/lib/content/foods";
 import { computeTargets } from "@/lib/profile";
 import { requireOnboardedProfile } from "@/lib/session";
 import { today } from "@/lib/db";
@@ -50,7 +51,7 @@ export default async function FoodPage({
     mode === "restaurant"
       ? RESTAURANT_ESTIMATES
       : q
-        ? searchFoods(q).slice(0, 25)
+        ? searchFoods(q, 25)
         : [];
   const recent = recentFoods(user.id, 8);
   const saved = customFoods(user.id);
