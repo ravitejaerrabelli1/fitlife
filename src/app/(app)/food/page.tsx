@@ -132,7 +132,9 @@ export default async function FoodPage({
           <p className="mt-3 text-sm text-muted">
             {mode === "restaurant"
               ? "No restaurant estimates available."
-              : "Search for a food to log it, or use a recent item below."}
+              : q
+                ? `No foods match "${q}". Check the spelling, or add it with Quick entry or Save a custom food below.`
+                : "Search for a food to log it, or use a recent item below."}
           </p>
         ) : null}
       </Card>
@@ -194,9 +196,23 @@ export default async function FoodPage({
       <Card>
         <SectionHeading
           title="Quick entry"
-          subtitle="Type a food and grams to fill in the nutrition, or enter your own numbers."
+          subtitle="Start typing, pick a food, then enter how much you ate. The nutrition updates as you type."
         />
-        <ManualFoodForm defaultMeal={meal} />
+        <ManualFoodForm
+          defaultMeal={meal}
+          savedFoods={saved.map((item) => ({
+            id: item.id,
+            name: item.name,
+            brand: item.brand || "Saved",
+            serving: item.serving,
+            calories: item.calories,
+            proteinG: item.protein_g,
+            carbsG: item.carbs_g,
+            fatG: item.fat_g,
+            fiberG: item.fiber_g,
+            tags: [],
+          }))}
+        />
       </Card>
 
       <Card>

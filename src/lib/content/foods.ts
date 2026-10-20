@@ -29,6 +29,8 @@ function food(
 const IN = "Indian (typical)";
 const SI = ["indian", "south_indian"];
 const NI = ["indian"];
+const IC = ["indian", "indo_chinese"];
+const FF = ["fast_food"];
 
 export const FOODS: FoodItem[] = [
   food("chicken-breast", "Chicken breast, cooked", "100 g", 165, 31, 0, 3.6, 0, ["protein"]),
@@ -122,6 +124,59 @@ export const FOODS: FoodItem[] = [
   food("masala-chai", "Masala chai with milk and sugar", "1 cup (150 ml)", 80, 2.5, 12, 2.5, 0, [...NI, "dairy"], IN),
   food("buttermilk", "Buttermilk (chaas)", "1 glass (200 ml)", 40, 2.5, 4, 1.5, 0, [...NI, "dairy"], IN),
   food("ghee", "Ghee", "1 tsp (5 g)", 45, 0, 0, 5, 0, [...NI, "dairy", "fat"], IN),
+  food("curd", "Curd (plain yogurt)", "1 cup (150 g)", 90, 5, 7, 4.5, 0, [...NI, "dairy"], IN),
+  food("boiled-egg", "Boiled egg", "1 large (50 g)", 78, 6.3, 0.6, 5.3, 0, ["protein", "vegetarian"]),
+  food("omelette", "Omelette (2 eggs)", "1 omelette (120 g)", 190, 13, 2, 14, 0.5, ["protein", "vegetarian"]),
+  food("set-dosa", "Set dosa", "2 pieces (150 g)", 300, 7, 52, 7, 2, SI, IN),
+  food("mysore-masala-dosa", "Mysore masala dosa", "1 dosa (200 g)", 420, 8, 56, 18, 3.5, SI, IN),
+  food("ragi-dosa", "Ragi dosa", "1 dosa (80 g)", 150, 3.5, 26, 3.5, 3, SI, IN),
+  food("egg-dosa", "Egg dosa", "1 dosa (130 g)", 250, 10, 30, 10, 1, SI, IN),
+  food("idiyappam", "Idiyappam", "2 pieces (100 g)", 150, 2.5, 33, 0.5, 1, SI, IN),
+  food("sakkarai-pongal", "Sakkarai pongal (sweet)", "1 cup (150 g)", 330, 5, 55, 10, 1.5, SI, IN),
+  food("rava-kesari", "Rava kesari", "1 cup (100 g)", 300, 3, 45, 12, 0.5, SI, IN),
+  food("mysore-pak", "Mysore pak", "1 piece (40 g)", 210, 2, 18, 15, 0.5, SI, IN),
+  food("veg-kurma", "Vegetable kurma", "1 bowl (150 g)", 190, 4, 14, 13, 4, SI, IN),
+  food("tomato-pappu", "Tomato pappu (dal)", "1 bowl (150 g)", 150, 8, 20, 4.5, 5, SI, IN),
+  food("chicken-chettinad", "Chicken chettinad", "1 bowl (200 g)", 340, 28, 9, 21, 2.5, SI, IN),
+  food("gongura-chicken", "Gongura chicken", "1 bowl (200 g)", 320, 27, 8, 20, 3, SI, IN),
+  food("andhra-chicken-fry", "Andhra chicken fry", "100 g", 260, 24, 5, 16, 1, SI, IN),
+  food("fish-fry", "Fish fry (tawa)", "1 piece (100 g)", 220, 21, 5, 13, 0.5, SI, IN),
+  food("prawn-curry", "Prawn curry", "1 bowl (200 g)", 260, 24, 8, 14, 1.5, SI, IN),
+  food("prawn-biryani", "Prawn biryani", "1 plate (300 g)", 520, 22, 64, 18, 2, SI, IN),
+  food("haleem", "Hyderabadi haleem", "1 bowl (250 g)", 500, 30, 35, 26, 5, SI, IN),
+  food("mirchi-bajji", "Mirchi bajji", "1 piece (60 g)", 150, 3, 15, 9, 2, SI, IN),
+  food("butter-chicken", "Butter chicken", "1 bowl (200 g)", 440, 28, 12, 31, 2, NI, IN),
+  food("chicken-tikka", "Chicken tikka", "100 g", 150, 25, 3, 4.5, 0.5, NI, IN),
+  food("tandoori-chicken", "Tandoori chicken", "1 leg piece (150 g)", 260, 36, 5, 11, 0.5, NI, IN),
+  food("mutton-curry", "Mutton curry", "1 bowl (200 g)", 380, 28, 8, 26, 2, NI, IN),
+  food("egg-curry", "Egg curry", "1 bowl (200 g)", 260, 14, 9, 19, 2, NI, IN),
+  food("butter-naan", "Butter naan", "1 piece (90 g)", 280, 8, 45, 8, 2, NI, IN),
+  food("aloo-paratha", "Aloo paratha", "1 piece (120 g)", 300, 6, 40, 13, 3, NI, IN),
+  food("jeera-rice", "Jeera rice", "1 cup (180 g)", 280, 5, 50, 7, 1, NI, IN),
+  food("pav-bhaji", "Pav bhaji", "1 plate with 2 pav (300 g)", 520, 12, 70, 22, 8, NI, IN),
+  food("vada-pav", "Vada pav", "1 piece (150 g)", 300, 7, 42, 12, 3, NI, IN),
+  food("pani-puri", "Pani puri", "6 pieces (120 g)", 210, 4, 32, 7, 3, NI, IN),
+  food("onion-pakoda", "Onion pakoda", "100 g", 320, 7, 30, 19, 4, NI, IN),
+  food("veg-fried-rice", "Veg fried rice", "1 plate (250 g)", 400, 8, 65, 12, 3, IC, IN),
+  food("chicken-fried-rice", "Chicken fried rice", "1 plate (250 g)", 450, 18, 60, 15, 2, IC, IN),
+  food("hakka-noodles", "Veg hakka noodles", "1 plate (250 g)", 420, 9, 62, 15, 4, IC, IN),
+  food("chicken-noodles", "Chicken noodles", "1 plate (250 g)", 460, 20, 58, 16, 3, IC, IN),
+  food("gobi-manchurian", "Gobi manchurian", "1 plate (200 g)", 340, 6, 38, 18, 4, IC, IN),
+  food("chilli-chicken", "Chilli chicken", "1 plate (200 g)", 420, 30, 18, 25, 2, IC, IN),
+  food("veg-momos", "Veg momos", "6 pieces (150 g)", 240, 7, 38, 6, 3, IC, IN),
+  food("chicken-momos", "Chicken momos", "6 pieces (150 g)", 280, 15, 32, 10, 2, IC, IN),
+
+  // Common fast food; chain portions vary.
+  food("chicken-burger", "Chicken burger", "1 burger (200 g)", 480, 24, 45, 22, 2, FF),
+  food("veg-burger", "Veg burger (aloo tikki)", "1 burger (170 g)", 390, 9, 52, 16, 4, FF),
+  food("cheeseburger", "Cheeseburger", "1 burger (120 g)", 300, 15, 32, 13, 1.5, FF),
+  food("chicken-sandwich", "Grilled chicken sandwich", "1 sandwich (200 g)", 400, 28, 40, 13, 3, FF),
+  food("veg-sandwich", "Veg sandwich", "1 sandwich (150 g)", 250, 7, 36, 8, 4, FF),
+  food("fried-chicken", "Fried chicken", "100 g", 280, 20, 10, 18, 0.5, FF),
+  food("chicken-nuggets", "Chicken nuggets", "6 pieces (100 g)", 296, 15, 16, 19, 1, FF),
+  food("french-fries", "French fries", "1 medium (115 g)", 365, 4, 48, 17, 4, FF),
+  food("margherita-pizza", "Margherita pizza", "1 slice (100 g)", 260, 11, 32, 10, 2, FF),
+  food("chicken-pizza", "Chicken pizza", "1 slice (110 g)", 290, 14, 31, 12, 2, FF),
 ];
 
 export const RESTAURANT_ESTIMATES: FoodItem[] = [
@@ -307,6 +362,28 @@ export const SUPPLEMENTS: Supplement[] = [
 export function servingGrams(serving: string): number | undefined {
   const match = /(\d+(?:\.\d+)?)\s*g\b/i.exec(serving);
   return match ? Number(match[1]) : undefined;
+}
+
+export type AmountUnit = "g" | "serving";
+
+/** Nutrition for an amount of a food, or undefined when it can't be scaled (e.g. grams of a per-item food). */
+export function nutritionFor(
+  food: FoodItem,
+  amount: number,
+  unit: AmountUnit,
+): { calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number } | undefined {
+  if (!(amount > 0)) return undefined;
+  const perServing = servingGrams(food.serving);
+  if (unit === "g" && !perServing) return undefined;
+  const factor = unit === "g" && perServing ? amount / perServing : amount;
+  const round = (value: number) => Math.round(value * factor * 10) / 10;
+  return {
+    calories: Math.round(food.calories * factor),
+    proteinG: round(food.proteinG),
+    carbsG: round(food.carbsG),
+    fatG: round(food.fatG),
+    fiberG: round(food.fiberG),
+  };
 }
 
 function normalize(text: string): string {
