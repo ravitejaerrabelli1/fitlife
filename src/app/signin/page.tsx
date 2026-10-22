@@ -17,7 +17,7 @@ export default async function SignInPage({
       <p className="mt-1 text-sm text-muted">Sign in to continue.</p>
       {reset ? (
         <p className="mt-3 rounded-xl bg-brand/10 px-3 py-2 text-sm text-brand">
-          Password updated. Sign in with your new password.
+          Password updated and all devices signed out. Sign in with your new password.
         </p>
       ) : null}
       <div className="mt-6">

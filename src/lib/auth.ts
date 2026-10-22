@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
-import { get, newId, nowIso, run } from "./db";
+import { get, getDb, newId, nowIso, run } from "./db";
 
 export const SESSION_COOKIE = "fitlife_session";
 const SESSION_DAYS = 30;
@@ -102,6 +102,43 @@ export async function requireUser(): Promise<SessionUser> {
 export class UnauthorizedError extends Error {
   constructor() {
     super("Not signed in");
+  }
+}
+
+export function revokeUserSessions(userId: string): void {
+  run("DELETE FROM sessions WHERE user_id = ?", [userId]);
+}
+
+/**
+ * Applies a password reset atomically: sets the new hash, marks the token used and
+ * signs the user out everywhere. Returns null for unknown, used or expired tokens.
+ */
+export function resetPasswordWithToken(
+  token: string,
+  passwordHash: string,
+  now = Date.now(),
+): { userId: string; email: string } | null {
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const row = get<{ user_id: string; email: string; expires_at: string; used: number }>(
+      `SELECT r.user_id, u.email, r.expires_at, r.used
+         FROM password_resets r JOIN users u ON u.id = r.user_id
+        WHERE r.token = ?`,
+      [token],
+    );
+    if (!row || row.used === 1 || new Date(row.expires_at).getTime() < now) {
+      db.exec("ROLLBACK");
+      return null;
+    }
+    run("UPDATE users SET password_hash = ? WHERE id = ?", [passwordHash, row.user_id]);
+    run("UPDATE password_resets SET used = 1 WHERE token = ?", [token]);
+    revokeUserSessions(row.user_id);
+    db.exec("COMMIT");
+    return { userId: row.user_id, email: row.email };
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
   }
 }
 

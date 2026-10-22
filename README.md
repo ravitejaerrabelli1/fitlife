@@ -31,6 +31,22 @@ The database is created on first use at `data/fitlife.db`. Override with
 role. Email delivery is not configured, so active password-reset links are listed
 on the admin page (`/admin`) for the admin to pass on.
 
+## Sign-in protection
+
+- After 5 failed sign-ins for an email within 15 minutes, further attempts for that
+  email are refused until the oldest failure is 15 minutes old. A successful sign-in or
+  a password reset clears the counter.
+- Password-reset requests are limited to 3 per email per hour. Extra requests get the
+  same response as normal ones, so the page never reveals whether an account exists.
+- Completing a password reset signs the account out on every device and marks the link
+  used. Reset links are never written to logs; admins see active ones on `/admin`.
+- Attempts are stored in the `auth_attempts` table (created automatically on startup;
+  rows older than a day are pruned). Limits are per email, not per IP, so someone who
+  knows an email can delay that user's sign-in by 15 minutes; the reset flow still works.
+
+Rollout: deploy as usual; the table is created on startup. Rollback: redeploy the
+previous build (it ignores the table), optionally `DROP TABLE auth_attempts`.
+
 ## Checks
 
 ```bash
