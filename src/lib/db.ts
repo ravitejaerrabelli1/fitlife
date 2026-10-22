@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
+import { localDate } from "./dates";
 
 const SCHEMA = `
 PRAGMA journal_mode = WAL;
@@ -63,6 +64,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   mode TEXT NOT NULL DEFAULT 'beginner',
   notifications TEXT NOT NULL DEFAULT '{}',
   onboarded INTEGER NOT NULL DEFAULT 0,
+  time_zone TEXT NOT NULL DEFAULT '',
   updated_at TEXT NOT NULL
 );
 
@@ -217,6 +219,7 @@ declare global {
 
 const ADDED_COLUMNS: { table: string; column: string; definition: string }[] = [
   { table: "profiles", column: "cardio_days", definition: "INTEGER" },
+  { table: "profiles", column: "time_zone", definition: "TEXT NOT NULL DEFAULT ''" },
   {
     table: "workout_sessions",
     column: "substitutions",
@@ -279,6 +282,6 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function today(): string {
-  return new Date().toISOString().slice(0, 10);
+export function today(timeZone?: string | null): string {
+  return localDate(timeZone);
 }
