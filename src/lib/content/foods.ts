@@ -117,6 +117,8 @@ export const FOODS: FoodItem[] = [
   food("chole", "Chole (chickpea curry)", "1 bowl (150 g)", 210, 9, 27, 7.5, 8, NI, IN),
   food("rajma", "Rajma (kidney bean curry)", "1 bowl (150 g)", 190, 9, 27, 5, 8, NI, IN),
   food("paneer", "Paneer", "100 g", 265, 18, 1.2, 21, 0, [...NI, "dairy"], IN),
+  food("soya-chunks", "Soya chunks (dry)", "100 g", 345, 52, 33, 0.5, 13, [...NI, "vegan", "protein"], IN),
+  food("soya-chunks-curry", "Soya chunks curry", "1 bowl (150 g)", 160, 15, 14, 5, 5, [...NI, "vegan"], IN),
   food("palak-paneer", "Palak paneer", "1 bowl (150 g)", 270, 12, 9, 21, 3, [...NI, "dairy"], IN),
   food("poha", "Poha", "1 plate (150 g)", 250, 4.5, 40, 8, 2, NI, IN),
   food("samosa", "Samosa", "1 piece (100 g)", 260, 4.5, 30, 14, 2.5, NI, IN),

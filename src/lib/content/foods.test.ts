@@ -20,6 +20,11 @@ describe("food search", () => {
     expect(southIndian).not.toContain("Chapati / roti");
   });
 
+  it("prefers typo matches over mid-word substrings", () => {
+    expect(names("aple")[0]).toBe("Apple");
+    expect(names("aple").slice(0, 3).join(" ")).not.toMatch(/maple/i);
+  });
+
   it("does not fuzzy-match short words", () => {
     expect(names("egg")).not.toContain("Feta cheese");
   });
