@@ -9,6 +9,7 @@ import {
   Select,
 } from "@/components/ui";
 import { RECIPES } from "@/lib/content/recipes";
+import { searchRecipes } from "@/lib/content/recipe-search";
 import { MEAL_SLOTS } from "@/lib/content/types";
 import { favorites } from "@/lib/logs";
 import { requireSession } from "@/lib/session";
@@ -39,9 +40,7 @@ export default async function RecipesPage({
   const minProtein = Number(params.minProtein) || undefined;
   const maxPrep = Number(params.maxPrep) || undefined;
 
-  const filtered = RECIPES.filter((recipe) => {
-    if (params.q && !recipe.name.toLowerCase().includes(params.q.toLowerCase()))
-      return false;
+  const filtered = searchRecipes(RECIPES, params.q ?? "").filter((recipe) => {
     if (params.cuisine && recipe.cuisine !== params.cuisine) return false;
     if (params.diet && !recipe.tags.includes(params.diet)) return false;
     if (params.slot && !recipe.slots.includes(params.slot as never)) return false;
@@ -65,7 +64,7 @@ export default async function RecipesPage({
       <Card>
         <SectionHeading title="Filter" />
         <form action="/recipes" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <Input name="q" defaultValue={params.q ?? ""} placeholder="Search" aria-label="Search recipes" />
+          <Input name="q" defaultValue={params.q ?? ""} placeholder="Search, e.g. paneer, soya" aria-label="Search recipes" />
           <Select name="cuisine" defaultValue={params.cuisine ?? ""} aria-label="Cuisine">
             <option value="">Any cuisine</option>
             {CUISINES.map((cuisine) => (
