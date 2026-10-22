@@ -39,6 +39,22 @@ describe("meal planner", () => {
     }
   });
 
+  it("dates plan days from the given local start date", () => {
+    const plan = generateMealPlan({
+      days: 3,
+      calorieTarget: 2000,
+      proteinTarget: 150,
+      preferences: basePreferences,
+      startDate: "2026-12-30",
+    });
+
+    expect(plan.days.map((day) => day.date)).toEqual([
+      "2026-12-30",
+      "2026-12-31",
+      "2027-01-01",
+    ]);
+  });
+
   it("respects dietary preferences and allergies", () => {
     const vegan = filterRecipes({
       ...basePreferences,

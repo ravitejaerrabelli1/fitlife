@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
@@ -37,6 +37,7 @@ import { calculateEstimatedCardioCalories } from "@/lib/calc/engine";
 import { getCardioActivity } from "@/lib/content/cardio";
 import { getExercise } from "@/lib/content/exercises";
 import { lbToKg, inToCm } from "@/lib/calc/units";
+import { isValidTimeZone } from "@/lib/dates";
 
 export interface ActionResult {
   ok: boolean;
@@ -157,6 +158,23 @@ function str(value: FormDataEntryValue | null): string {
   return String(value ?? "").trim();
 }
 
+function userToday(userId: string): string {
+  return today(getProfile(userId)?.time_zone);
+}
+
+function dateOr(value: FormDataEntryValue | null, fallback: string): string {
+  const date = str(value);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : fallback;
+}
+
+export async function setTimeZoneAction(timeZone: string): Promise<void> {
+  const user = await getSessionUser();
+  if (!user || typeof timeZone !== "string" || !isValidTimeZone(timeZone)) return;
+  if (getProfile(user.id)?.time_zone === timeZone) return;
+  updateProfile(user.id, { time_zone: timeZone });
+  refresh();
+}
+
 export async function saveOnboardingAction(
   _prev: ActionResult | null,
   formData: FormData,
@@ -226,7 +244,7 @@ export async function saveOnboardingAction(
     onboarded: true,
   });
 
-  setWeight(user.id, Math.round(weightKg * 10) / 10);
+  setWeight(user.id, Math.round(weightKg * 10) / 10, userToday(user.id));
   revalidatePath("/dashboard");
   redirect("/dashboard");
 }
@@ -301,7 +319,7 @@ export async function updateProfileAction(
     typeof patch.weight_kg === "number" &&
     patch.weight_kg !== profile.weight_kg
   ) {
-    setWeight(user.id, patch.weight_kg);
+    setWeight(user.id, patch.weight_kg, today(profile.time_zone));
   }
   revalidatePath("/profile");
   revalidatePath("/dashboard");
@@ -320,7 +338,7 @@ export async function logFoodAction(
   if (!name) return { ok: false, error: "Give the entry a name." };
 
   addNutritionLog(user.id, {
-    date: str(formData.get("date")) || today(),
+    date: dateOr(formData.get("date"), userToday(user.id)),
     meal: str(formData.get("meal")) || "lunch",
     name,
     source: str(formData.get("source")) || "food",
@@ -345,6 +363,7 @@ export async function quickLogFoodAction(formData: FormData): Promise<void> {
   const name = str(formData.get("name"));
   if (!name || !(servings > 0)) return;
   addNutritionLog(user.id, {
+    date: userToday(user.id),
     meal: str(formData.get("meal")) || "lunch",
     name,
     source: str(formData.get("source")) || "food",
@@ -402,14 +421,14 @@ export async function saveCustomFoodAction(
 export async function addWaterAction(formData: FormData): Promise<void> {
   const user = await requireSession();
   const amount = num(formData.get("amountMl")) ?? 250;
-  addWater(user.id, amount);
+  addWater(user.id, amount, userToday(user.id));
   revalidatePath("/dashboard");
 }
 
 export async function setStepsAction(formData: FormData): Promise<void> {
   const user = await requireSession();
   const steps = num(formData.get("steps")) ?? 0;
-  setSteps(user.id, steps);
+  setSteps(user.id, steps, userToday(user.id));
   revalidatePath("/dashboard");
   revalidatePath("/progress");
 }
@@ -426,7 +445,7 @@ export async function logWeightAction(
   }
   const weightKg =
     profile?.units === "imperial" ? Math.round(lbToKg(value) * 10) / 10 : value;
-  const date = str(formData.get("date")) || today();
+  const date = dateOr(formData.get("date"), today(profile?.time_zone));
   setWeight(user.id, weightKg, date, str(formData.get("note")));
   updateProfile(user.id, { weight_kg: weightKg });
   revalidatePath("/progress");
@@ -444,7 +463,7 @@ export async function logMeasurementsAction(
     value == null ? null : profile?.units === "imperial" ? inToCm(value) : value;
   saveMeasurement(
     user.id,
-    str(formData.get("date")) || today(),
+    dateOr(formData.get("date"), today(profile?.time_zone)),
     {
       waist_cm: toCm(num(formData.get("waist"))),
       neck_cm: toCm(num(formData.get("neck"))),
@@ -479,6 +498,7 @@ export async function generateMealPlanAction(formData: FormData): Promise<void> 
       budgetFriendlyOnly: formData.get("budget") === "on",
     },
     includeEveningSnack: formData.get("eveningSnack") === "on",
+    startDate: today(profile.time_zone),
   });
 
   run(
@@ -486,7 +506,7 @@ export async function generateMealPlanAction(formData: FormData): Promise<void> 
     [
       newId(),
       user.id,
-      plan.days[0]?.date ?? today(),
+      plan.days[0]?.date ?? today(profile.time_zone),
       plan.days.length,
       targets.effectiveCalories,
       JSON.stringify(plan),
@@ -543,9 +563,8 @@ export async function swapMealAction(formData: FormData): Promise<void> {
 
 export async function logPlannedMealAction(formData: FormData): Promise<void> {
   const user = await requireSession();
-  const date = str(formData.get("date"));
   addNutritionLog(user.id, {
-    date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined,
+    date: dateOr(formData.get("date"), userToday(user.id)),
     meal: str(formData.get("slot")) || "lunch",
     name: str(formData.get("name")),
     source: "recipe",
@@ -579,7 +598,7 @@ export async function startWorkoutAction(formData: FormData): Promise<void> {
     [
       id,
       user.id,
-      today(),
+      today(profile.time_zone),
       str(formData.get("name")) || day.name,
       dayKey,
       // Snapshot the prescription so later profile edits cannot rewrite this session.
@@ -730,7 +749,7 @@ export async function logCardioAction(
     [
       newId(),
       user.id,
-      str(formData.get("date")) || today(),
+      dateOr(formData.get("date"), today(profile?.time_zone)),
       activity.id,
       activity.name,
       Math.round(minutes),

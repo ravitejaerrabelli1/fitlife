@@ -16,6 +16,9 @@ export default async function ProfilePage() {
       <div>
         <h1 className="text-xl font-semibold">Profile</h1>
         <p className="text-sm text-muted">{user.email}</p>
+        <p className="text-xs text-muted">
+          Time zone: {profile.time_zone || "UTC"} (from this device; days start at your local midnight)
+        </p>
       </div>
 
       <Card>

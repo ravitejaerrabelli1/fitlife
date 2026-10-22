@@ -53,6 +53,7 @@ export interface ProfileRow {
   mode: string;
   notifications: string;
   onboarded: number;
+  time_zone: string;
   updated_at: string;
 }
 
@@ -130,6 +131,7 @@ const UPDATABLE = new Set([
   "mode",
   "notifications",
   "onboarded",
+  "time_zone",
 ]);
 
 export function updateProfile(

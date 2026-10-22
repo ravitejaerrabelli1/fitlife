@@ -31,6 +31,7 @@ import {
 } from "@/lib/logs";
 import { computeTargets } from "@/lib/profile";
 import { requireOnboardedProfile } from "@/lib/session";
+import { addDays, localDate } from "@/lib/dates";
 
 const RANGES: Record<string, number> = {
   "30d": 30,
@@ -54,7 +55,7 @@ export default async function ProgressPage({
   const weightUnit = imperial ? "lb" : "kg";
   const lengthUnit = imperial ? "in" : "cm";
 
-  const weightLogs = getWeightLogs(user.id).filter(withinDays(days));
+  const weightLogs = getWeightLogs(user.id).filter(withinDays(days, profile.time_zone));
   const trend = calculateWeightTrend(
     weightLogs.map((log) => ({ date: log.date, weightKg: log.weight_kg })),
   );
@@ -71,10 +72,10 @@ export default async function ProgressPage({
     weeksOfData,
   });
 
-  const measurements = getMeasurements(user.id).filter(withinDays(days));
+  const measurements = getMeasurements(user.id).filter(withinDays(days, profile.time_zone));
   const steps = recentSteps(user.id, Math.min(days, 90));
-  const workouts = workoutHistory(user.id, 60).filter(withinDays(days));
-  const cardio = cardioHistory(user.id, 60).filter(withinDays(days));
+  const workouts = workoutHistory(user.id, 60).filter(withinDays(days, profile.time_zone));
+  const cardio = cardioHistory(user.id, 60).filter(withinDays(days, profile.time_zone));
   const volume = strengthVolumeByWeek(user.id, 12);
   const records = personalRecords(user.id);
 
@@ -276,9 +277,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function withinDays(days: number) {
-  const cutoff = new Date(Date.now() - days * 86400000)
-    .toISOString()
-    .slice(0, 10);
+function withinDays(days: number, timeZone: string) {
+  const cutoff = addDays(localDate(timeZone), -days);
   return (row: { date: string }) => row.date >= cutoff;
 }

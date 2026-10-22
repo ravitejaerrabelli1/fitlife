@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BottomNav } from "@/components/bottom-nav";
 import { ThemeSync, type ThemePreference } from "@/components/theme-toggle";
+import { TimeZoneSync } from "@/components/time-zone-sync";
 import { getProfile } from "@/lib/profile";
 import { requireSession } from "@/lib/session";
 
@@ -16,6 +17,7 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-full flex-col">
       <ThemeSync preference={theme} />
+      <TimeZoneSync saved={profile?.time_zone ?? ""} />
       <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center px-4 py-3">
           <Link href="/dashboard" className="font-semibold tracking-tight">
