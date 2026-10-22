@@ -3,6 +3,7 @@ import { Card, SectionHeading } from "@/components/ui";
 import { all } from "@/lib/db";
 import { CARDIO_ACTIVITIES } from "@/lib/content/cardio";
 import { EXERCISES } from "@/lib/content/exercises";
+import { USDA_FOODS } from "@/lib/content/food-search";
 import { FOODS, SUPPLEMENTS } from "@/lib/content/foods";
 import { RECIPES } from "@/lib/content/recipes";
 import { requireSession } from "@/lib/session";
@@ -42,7 +43,7 @@ export default async function AdminPage() {
           <Stat label="Recipes" value={RECIPES.length} />
           <Stat label="Exercises" value={EXERCISES.length} />
           <Stat label="Cardio activities" value={CARDIO_ACTIVITIES.length} />
-          <Stat label="Foods" value={FOODS.length} />
+          <Stat label="Foods" value={FOODS.length + USDA_FOODS.length} />
           <Stat label="Supplements" value={SUPPLEMENTS.length} />
         </dl>
       </Card>

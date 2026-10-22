@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button, Card, Disclaimer, SectionHeading } from "@/components/ui";
 import { ProfileSettings } from "@/components/profile-settings";
@@ -43,6 +44,18 @@ export default async function ProfilePage() {
       </Card>
 
       <ProfileSettings profile={profile} />
+
+      {user.role === "admin" ? (
+        <Card>
+          <SectionHeading title="Admin" subtitle="Only visible to the admin account." />
+          <Link
+            href="/admin"
+            className="inline-flex items-center rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium hover:bg-surface-muted"
+          >
+            Open admin page
+          </Link>
+        </Card>
+      ) : null}
 
       <Card>
         <SectionHeading

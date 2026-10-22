@@ -5,6 +5,7 @@ import {
   Card,
   EmptyState,
   Input,
+  LinkButton,
   ProgressBar,
   SectionHeading,
   Select,
@@ -17,7 +18,8 @@ import {
   recentFoods,
   sumLogs,
 } from "@/lib/logs";
-import { RESTAURANT_ESTIMATES, searchFoods } from "@/lib/content/foods";
+import { searchFoods } from "@/lib/content/food-search";
+import { RESTAURANT_ESTIMATES } from "@/lib/content/foods";
 import { computeTargets } from "@/lib/profile";
 import { requireOnboardedProfile } from "@/lib/session";
 import { today } from "@/lib/db";
@@ -50,7 +52,7 @@ export default async function FoodPage({
     mode === "restaurant"
       ? RESTAURANT_ESTIMATES
       : q
-        ? searchFoods(q).slice(0, 25)
+        ? searchFoods(q, 25)
         : [];
   const recent = recentFoods(user.id, 8);
   const saved = customFoods(user.id);
@@ -62,6 +64,17 @@ export default async function FoodPage({
         <p className="text-sm text-muted">
           {Math.round(totals.calories)} of {targets.effectiveCalories} kcal today
         </p>
+        <nav aria-label="Food sections" className="mt-3 flex flex-wrap gap-2">
+          <LinkButton href="/recipes" variant="secondary" className="px-3 py-1.5 text-xs">
+            Recipes
+          </LinkButton>
+          <LinkButton href="/meal-plan" variant="secondary" className="px-3 py-1.5 text-xs">
+            Meal plan
+          </LinkButton>
+          <LinkButton href="/favorites" variant="secondary" className="px-3 py-1.5 text-xs">
+            Favourites
+          </LinkButton>
+        </nav>
       </div>
 
       <Card className="space-y-3">
@@ -101,7 +114,7 @@ export default async function FoodPage({
           <Input
             name="q"
             defaultValue={q}
-            placeholder="Search foods"
+            placeholder="Search 7,800+ foods, e.g. apple, dosa"
             aria-label="Search foods"
             className="min-w-40 flex-1"
           />
@@ -132,7 +145,9 @@ export default async function FoodPage({
           <p className="mt-3 text-sm text-muted">
             {mode === "restaurant"
               ? "No restaurant estimates available."
-              : "Search for a food to log it, or use a recent item below."}
+              : q
+                ? `No foods match "${q}". Check the spelling, or add it with Quick entry or Save a custom food below.`
+                : "Search for a food to log it, or use a recent item below."}
           </p>
         ) : null}
       </Card>
@@ -194,9 +209,23 @@ export default async function FoodPage({
       <Card>
         <SectionHeading
           title="Quick entry"
-          subtitle="Type a food and grams to fill in the nutrition, or enter your own numbers."
+          subtitle="Start typing, pick a food, then enter how much you ate. The nutrition updates as you type."
         />
-        <ManualFoodForm defaultMeal={meal} />
+        <ManualFoodForm
+          defaultMeal={meal}
+          savedFoods={saved.map((item) => ({
+            id: item.id,
+            name: item.name,
+            brand: item.brand || "Saved",
+            serving: item.serving,
+            calories: item.calories,
+            proteinG: item.protein_g,
+            carbsG: item.carbs_g,
+            fatG: item.fat_g,
+            fiberG: item.fiber_g,
+            tags: [],
+          }))}
+        />
       </Card>
 
       <Card>
