@@ -32,8 +32,7 @@ import {
   SIGN_IN_LIMIT,
   clearAttempts,
   minutesUntil,
-  recordAttempt,
-  retryAfterMs,
+  takeAttempt,
 } from "@/lib/rate-limit";
 import type { Equipment, Experience, Goal } from "@/lib/calc/types";
 import { generateMealPlan } from "@/lib/planner/meals";
@@ -84,7 +83,7 @@ export async function signInAction(
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const attemptKey = `signin:${email}`;
-  const wait = retryAfterMs(attemptKey, SIGN_IN_LIMIT);
+  const wait = takeAttempt(attemptKey, SIGN_IN_LIMIT);
   if (wait > 0) {
     return {
       ok: false,
@@ -93,7 +92,6 @@ export async function signInAction(
   }
   const user = findUserByEmail(email);
   if (!user || !(await verifyPassword(password, user.password_hash))) {
-    recordAttempt(attemptKey);
     return { ok: false, error: "Email or password is incorrect." };
   }
   clearAttempts(attemptKey);
@@ -118,8 +116,7 @@ export async function requestPasswordResetAction(
     message:
       "If an account exists for that email, a reset link has been created. Email delivery isn't set up yet, so ask your FitLife admin to send it to you.",
   };
-  if (retryAfterMs(attemptKey, RESET_REQUEST_LIMIT) > 0) return done;
-  recordAttempt(attemptKey);
+  if (takeAttempt(attemptKey, RESET_REQUEST_LIMIT) > 0) return done;
   const user = findUserByEmail(email);
   if (!user) return done;
   const token = newId().replaceAll("-", "");
@@ -144,7 +141,6 @@ export async function completePasswordResetAction(
     return { ok: false, error: "That reset link is invalid or has expired." };
   }
   clearAttempts(`signin:${reset.email}`);
-  await endSession();
   redirect("/signin?reset=1");
 }
 

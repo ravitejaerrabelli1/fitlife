@@ -11,6 +11,7 @@ import {
   minutesUntil,
   recordAttempt,
   retryAfterMs,
+  takeAttempt,
 } from "./rate-limit";
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fitlife-auth-"));
@@ -55,6 +56,15 @@ describe("attempt limiting", () => {
     expect(retryAfterMs("reset:a@example.com", RESET_REQUEST_LIMIT, NOW)).toBe(0);
     clearAttempts("signin:a@example.com");
     expect(retryAfterMs("signin:a@example.com", SIGN_IN_LIMIT, NOW)).toBe(0);
+  });
+
+  it("takeAttempt records only allowed attempts, so callers can reserve before slow checks", () => {
+    const key = "signin:race@example.com";
+    const results = Array.from({ length: 8 }, () => takeAttempt(key, SIGN_IN_LIMIT, NOW));
+    expect(results.filter((wait) => wait === 0)).toHaveLength(SIGN_IN_LIMIT.max);
+    expect(results.slice(SIGN_IN_LIMIT.max).every((wait) => wait === 15 * MINUTE)).toBe(true);
+    expect(all("SELECT id FROM auth_attempts WHERE key = ?", [key])).toHaveLength(SIGN_IN_LIMIT.max);
+    expect(takeAttempt(key, SIGN_IN_LIMIT, NOW + 15 * MINUTE)).toBe(0);
   });
 
   it("limits reset requests to 3 per hour", () => {
