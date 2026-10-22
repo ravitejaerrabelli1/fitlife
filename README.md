@@ -31,6 +31,15 @@ The database is created on first use at `data/fitlife.db`. Override with
 role. Email delivery is not configured, so active password-reset links are listed
 on the admin page (`/admin`) for the admin to pass on.
 
+## Checks
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
 ## Sign-in protection
 
 - After 5 failed sign-ins for an email within 15 minutes, further attempts for that
@@ -46,15 +55,6 @@ on the admin page (`/admin`) for the admin to pass on.
 
 Rollout: deploy as usual; the table is created on startup. Rollback: redeploy the
 previous build (it ignores the table), optionally `DROP TABLE auth_attempts`.
-
-## Checks
-
-```bash
-npm run lint
-npm run typecheck
-npm test
-npm run build
-```
 
 ## Structure
 

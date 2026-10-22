@@ -27,6 +27,14 @@ import {
   toggleFavorite,
 } from "@/lib/logs";
 import { requireOnboardedProfile, requireSession } from "@/lib/session";
+import {
+  RESET_REQUEST_LIMIT,
+  SIGN_IN_LIMIT,
+  clearAttempts,
+  minutesUntil,
+  recordAttempt,
+  retryAfterMs,
+} from "@/lib/rate-limit";
 import type { Equipment, Experience, Goal } from "@/lib/calc/types";
 import { generateMealPlan } from "@/lib/planner/meals";
 import {
@@ -38,14 +46,6 @@ import { calculateEstimatedCardioCalories } from "@/lib/calc/engine";
 import { getCardioActivity } from "@/lib/content/cardio";
 import { getExercise } from "@/lib/content/exercises";
 import { lbToKg, inToCm } from "@/lib/calc/units";
-import {
-  RESET_REQUEST_LIMIT,
-  SIGN_IN_LIMIT,
-  clearAttempts,
-  minutesUntil,
-  recordAttempt,
-  retryAfterMs,
-} from "@/lib/rate-limit";
 
 export interface ActionResult {
   ok: boolean;
