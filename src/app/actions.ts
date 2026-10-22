@@ -10,6 +10,7 @@ import {
   findUserByEmail,
   getSessionUser,
   hashPassword,
+  resetPasswordWithToken,
   startSession,
   verifyPassword,
 } from "@/lib/auth";
@@ -26,6 +27,13 @@ import {
   toggleFavorite,
 } from "@/lib/logs";
 import { requireOnboardedProfile, requireSession } from "@/lib/session";
+import {
+  RESET_REQUEST_LIMIT,
+  SIGN_IN_LIMIT,
+  clearAttempts,
+  minutesUntil,
+  takeAttempt,
+} from "@/lib/rate-limit";
 import type { Equipment, Experience, Goal } from "@/lib/calc/types";
 import { generateMealPlan } from "@/lib/planner/meals";
 import {
@@ -74,10 +82,19 @@ export async function signInAction(
 ): Promise<ActionResult> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const attemptKey = `signin:${email}`;
+  const wait = takeAttempt(attemptKey, SIGN_IN_LIMIT);
+  if (wait > 0) {
+    return {
+      ok: false,
+      error: `Too many sign-in attempts. Try again in ${minutesUntil(wait)} min, or reset your password.`,
+    };
+  }
   const user = findUserByEmail(email);
   if (!user || !(await verifyPassword(password, user.password_hash))) {
     return { ok: false, error: "Email or password is incorrect." };
   }
+  clearAttempts(attemptKey);
   await startSession(user.id);
   const profile = getProfile(user.id);
   redirect(profile?.onboarded ? "/dashboard" : "/onboarding");
@@ -93,27 +110,21 @@ export async function requestPasswordResetAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const attemptKey = `reset:${email}`;
+  const done: ActionResult = {
+    ok: true,
+    message:
+      "If an account exists for that email, a reset link has been created. Email delivery isn't set up yet, so ask your FitLife admin to send it to you.",
+  };
+  if (takeAttempt(attemptKey, RESET_REQUEST_LIMIT) > 0) return done;
   const user = findUserByEmail(email);
-  if (!user) {
-    return {
-      ok: true,
-      message:
-        "If an account exists for that email, a reset link has been created. Email delivery isn't set up yet, so ask your FitLife admin to send it to you.",
-    };
-  }
+  if (!user) return done;
   const token = newId().replaceAll("-", "");
   run(
     "INSERT INTO password_resets (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
     [token, user.id, nowIso(), new Date(Date.now() + 3600_000).toISOString()],
   );
-  if (process.env.NODE_ENV === "development") {
-    console.info(`[password reset] /reset/${token}`);
-  }
-  return {
-    ok: true,
-    message:
-      "If an account exists for that email, a reset link has been created. Email delivery isn't set up yet, so ask your FitLife admin to send it to you.",
-  };
+  return done;
 }
 
 export async function completePasswordResetAction(
@@ -125,18 +136,11 @@ export async function completePasswordResetAction(
   if (password.length < 8) {
     return { ok: false, error: "Use at least 8 characters." };
   }
-  const row = get<{ user_id: string; expires_at: string; used: number }>(
-    "SELECT user_id, expires_at, used FROM password_resets WHERE token = ?",
-    [token],
-  );
-  if (!row || row.used === 1 || new Date(row.expires_at).getTime() < Date.now()) {
+  const reset = resetPasswordWithToken(token, await hashPassword(password));
+  if (!reset) {
     return { ok: false, error: "That reset link is invalid or has expired." };
   }
-  run("UPDATE users SET password_hash = ? WHERE id = ?", [
-    await hashPassword(password),
-    row.user_id,
-  ]);
-  run("UPDATE password_resets SET used = 1 WHERE token = ?", [token]);
+  clearAttempts(`signin:${reset.email}`);
   redirect("/signin?reset=1");
 }
 
