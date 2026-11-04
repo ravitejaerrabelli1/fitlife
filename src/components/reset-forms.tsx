@@ -53,7 +53,12 @@ export function CompleteResetForm({ token }: { token: string }) {
           {state.error}
         </p>
       ) : null}
-      <Button type="submit" className="w-full" disabled={pending}>
+      {state?.message ? (
+        <p className="rounded-xl bg-brand/10 px-3 py-2 text-sm text-brand" role="status">
+          {state.message}
+        </p>
+      ) : null}
+      <Button type="submit" className="w-full" disabled={pending || Boolean(state?.ok)}>
         {pending ? "Working…" : "Update password"}
       </Button>
     </form>

@@ -141,6 +141,12 @@ export async function completePasswordResetAction(
     return { ok: false, error: "That reset link is invalid or has expired." };
   }
   clearAttempts(`signin:${reset.email}`);
+  if (await getSessionUser()) {
+    return {
+      ok: true,
+      message: "Password updated and that account was signed out on all devices. You're still signed in here.",
+    };
+  }
   redirect("/signin?reset=1");
 }
 
