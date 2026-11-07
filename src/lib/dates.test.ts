@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, isValidTimeZone, localDate, localHour } from "./dates";
+import { addDays, isIsoDate, isValidTimeZone, localDate, localHour } from "./dates";
 
 // 2026-10-09 20:00 UTC = 2026-10-10 01:30 in India (UTC+5:30).
 const lateEveningUtc = new Date("2026-10-09T20:00:00Z");
@@ -49,5 +49,21 @@ describe("addDays", () => {
     expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
     expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
     expect(addDays("2026-03-07", 2)).toBe("2026-03-09");
+  });
+});
+
+describe("isIsoDate", () => {
+  it("accepts real calendar dates, including leap days", () => {
+    expect(isIsoDate("2026-11-04")).toBe(true);
+    expect(isIsoDate("2028-02-29")).toBe(true);
+  });
+
+  it("rejects impossible or malformed dates", () => {
+    expect(isIsoDate("2026-02-29")).toBe(false);
+    expect(isIsoDate("2026-02-31")).toBe(false);
+    expect(isIsoDate("2026-13-01")).toBe(false);
+    expect(isIsoDate("2026-1-1")).toBe(false);
+    expect(isIsoDate("2026-11-04T00:00")).toBe(false);
+    expect(isIsoDate("")).toBe(false);
   });
 });

@@ -37,7 +37,7 @@ import { calculateEstimatedCardioCalories } from "@/lib/calc/engine";
 import { getCardioActivity } from "@/lib/content/cardio";
 import { getExercise } from "@/lib/content/exercises";
 import { lbToKg, inToCm } from "@/lib/calc/units";
-import { isValidTimeZone } from "@/lib/dates";
+import { isIsoDate, isValidTimeZone } from "@/lib/dates";
 
 export interface ActionResult {
   ok: boolean;
@@ -164,7 +164,7 @@ function userToday(userId: string): string {
 
 function dateOr(value: FormDataEntryValue | null, fallback: string): string {
   const date = str(value);
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : fallback;
+  return isIsoDate(date) ? date : fallback;
 }
 
 export async function setTimeZoneAction(timeZone: string): Promise<void> {
