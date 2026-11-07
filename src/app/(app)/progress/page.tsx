@@ -23,6 +23,7 @@ import {
   cardioHistory,
   dailyCalories,
   getMeasurements,
+  NO_LIMIT,
   getWeightLogs,
   personalRecords,
   recentSteps,
@@ -55,11 +56,15 @@ export default async function ProgressPage({
   const weightUnit = imperial ? "lb" : "kg";
   const lengthUnit = imperial ? "in" : "cm";
 
-  const weightLogs = getWeightLogs(user.id).filter(withinDays(days, profile.time_zone));
+  const localToday = localDate(profile.time_zone);
+  const since = addDays(localToday, -days);
+  const inRange = (row: { date: string }) => row.date >= since;
+
+  const weightLogs = getWeightLogs(user.id).filter(inRange);
   const trend = calculateWeightTrend(
     weightLogs.map((log) => ({ date: log.date, weightKg: log.weight_kg })),
   );
-  const intake = dailyCalories(user.id, Math.min(days, 180));
+  const intake = dailyCalories(user.id, addDays(localToday, -Math.min(days, 180)));
   const averageIntake = intake.length
     ? intake.reduce((sum, day) => sum + day.calories, 0) / intake.length
     : null;
@@ -72,10 +77,10 @@ export default async function ProgressPage({
     weeksOfData,
   });
 
-  const measurements = getMeasurements(user.id).filter(withinDays(days, profile.time_zone));
-  const steps = recentSteps(user.id, Math.min(days, 90));
-  const workouts = workoutHistory(user.id, 60).filter(withinDays(days, profile.time_zone));
-  const cardio = cardioHistory(user.id, 60).filter(withinDays(days, profile.time_zone));
+  const measurements = getMeasurements(user.id).filter(inRange);
+  const steps = recentSteps(user.id, addDays(localToday, -Math.min(days, 90)));
+  const workouts = workoutHistory(user.id, NO_LIMIT, since);
+  const cardio = cardioHistory(user.id, NO_LIMIT, since);
   const volume = strengthVolumeByWeek(user.id, 12);
   const records = personalRecords(user.id);
 
@@ -275,9 +280,4 @@ function Stat({ label, value }: { label: string; value: string | number }) {
       <p className="text-lg font-semibold">{value}</p>
     </li>
   );
-}
-
-function withinDays(days: number, timeZone: string) {
-  const cutoff = addDays(localDate(timeZone), -days);
-  return (row: { date: string }) => row.date >= cutoff;
 }
