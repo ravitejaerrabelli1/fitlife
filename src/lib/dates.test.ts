@@ -67,3 +67,36 @@ describe("isIsoDate", () => {
     expect(isIsoDate("")).toBe(false);
   });
 });
+
+describe("daylight saving transitions", () => {
+  it("keeps New York midnight on the local calendar across spring-forward", () => {
+    // 2026-03-08: clocks jump 02:00 EST → 03:00 EDT.
+    expect(localDate("America/New_York", new Date("2026-03-08T04:59:00Z"))).toBe("2026-03-07");
+    expect(localDate("America/New_York", new Date("2026-03-08T05:00:00Z"))).toBe("2026-03-08");
+    expect(localDate("America/New_York", new Date("2026-03-09T03:59:00Z"))).toBe("2026-03-08");
+    expect(localDate("America/New_York", new Date("2026-03-09T04:00:00Z"))).toBe("2026-03-09");
+  });
+
+  it("keeps New York midnight on the local calendar across fall-back", () => {
+    // 2026-11-01: clocks fall back 02:00 EDT → 01:00 EST.
+    expect(localDate("America/New_York", new Date("2026-11-01T03:59:00Z"))).toBe("2026-10-31");
+    expect(localDate("America/New_York", new Date("2026-11-01T04:00:00Z"))).toBe("2026-11-01");
+    expect(localDate("America/New_York", new Date("2026-11-02T04:59:00Z"))).toBe("2026-11-01");
+    expect(localDate("America/New_York", new Date("2026-11-02T05:00:00Z"))).toBe("2026-11-02");
+    // The repeated 01:00 hour stays on the same day.
+    expect(localHour("America/New_York", new Date("2026-11-01T05:30:00Z"))).toBe(1);
+    expect(localHour("America/New_York", new Date("2026-11-01T06:30:00Z"))).toBe(1);
+  });
+
+  it("follows London's switch to BST", () => {
+    // 2026-03-29: clocks jump 01:00 GMT → 02:00 BST.
+    expect(localDate("Europe/London", new Date("2026-03-28T23:59:00Z"))).toBe("2026-03-28");
+    expect(localDate("Europe/London", new Date("2026-03-29T22:59:00Z"))).toBe("2026-03-29");
+    expect(localDate("Europe/London", new Date("2026-03-29T23:00:00Z"))).toBe("2026-03-30");
+  });
+
+  it("adds whole calendar days across a DST weekend", () => {
+    expect(addDays("2026-03-07", 1)).toBe("2026-03-08");
+    expect(addDays("2026-10-31", 2)).toBe("2026-11-02");
+  });
+});
