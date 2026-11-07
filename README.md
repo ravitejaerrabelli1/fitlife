@@ -49,6 +49,10 @@ npm run build
   same response as normal ones, so the page never reveals whether an account exists.
 - Completing a password reset signs the account out on every device and marks the link
   used. Reset links are never written to logs; admins see active ones on `/admin`.
+- Reset links look like `/reset#<token>`. The token is in the URL fragment, which
+  browsers never send to the server, so it stays out of server, proxy and hosting
+  access logs. Reset pages send `Referrer-Policy: no-referrer`. Older `/reset/<token>`
+  links keep working until they expire (one hour).
 - Attempts are stored in the `auth_attempts` table (created automatically on startup;
   rows older than a day are pruned). Limits are per email, not per IP, so someone who
   knows an email can delay that user's sign-in by 15 minutes; the reset flow still works.

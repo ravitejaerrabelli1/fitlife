@@ -1,12 +1,50 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useSyncExternalStore } from "react";
 import {
   completePasswordResetAction,
   requestPasswordResetAction,
   type ActionResult,
 } from "@/app/actions";
+import { tokenFromHash } from "@/lib/reset-link";
 import { Button, Field, Input } from "./ui";
+
+function subscribeToHash(onChange: () => void) {
+  window.addEventListener("hashchange", onChange);
+  return () => window.removeEventListener("hashchange", onChange);
+}
+
+/** Shows the new-password form for `/reset#<token>` links, otherwise the request form. */
+export function ResetPanel() {
+  const hash = useSyncExternalStore(subscribeToHash, () => window.location.hash, () => "");
+  const hashToken = tokenFromHash(hash);
+  // In-page anchors like the skip link (#main) keep the last token; an empty hash clears it.
+  const [lastToken, setLastToken] = useState("");
+  const token = hashToken || (hash ? lastToken : "");
+  if (token !== lastToken) setLastToken(token);
+  if (token) {
+    return (
+      <>
+        <h1 className="text-2xl font-semibold">Choose a new password</h1>
+        <div className="mt-6">
+          <CompleteResetForm token={token} />
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <h1 className="text-2xl font-semibold">Reset your password</h1>
+      <p className="mt-1 text-sm text-muted">
+        Enter the email on your account and we will create a one-hour reset
+        link. Your FitLife admin can send it to you.
+      </p>
+      <div className="mt-6">
+        <RequestResetForm />
+      </div>
+    </>
+  );
+}
 
 export function RequestResetForm() {
   const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
