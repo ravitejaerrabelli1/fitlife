@@ -114,11 +114,14 @@ export function setSteps(userId: string, steps: number, date: string): void {
   );
 }
 
-export function recentSteps(userId: string, days: number) {
+/** SQLite treats a negative LIMIT as no limit. */
+export const NO_LIMIT = -1;
+
+export function recentSteps(userId: string, since: string) {
   return all<{ date: string; steps: number }>(
-    "SELECT date, steps FROM step_logs WHERE user_id = ? ORDER BY date DESC LIMIT ?",
-    [userId, days],
-  ).reverse();
+    "SELECT date, steps FROM step_logs WHERE user_id = ? AND date >= ? ORDER BY date ASC",
+    [userId, since],
+  );
 }
 
 export function setWeight(
@@ -189,16 +192,16 @@ export function saveMeasurement(
   );
 }
 
-export function dailyCalories(userId: string, days: number) {
+export function dailyCalories(userId: string, since: string) {
   return all<{ date: string; calories: number; protein_g: number }>(
     `SELECT date, SUM(calories) AS calories, SUM(protein_g) AS protein_g
-     FROM nutrition_logs WHERE user_id = ?
-     GROUP BY date ORDER BY date DESC LIMIT ?`,
-    [userId, days],
-  ).reverse();
+     FROM nutrition_logs WHERE user_id = ? AND date >= ?
+     GROUP BY date ORDER BY date ASC`,
+    [userId, since],
+  );
 }
 
-export function workoutHistory(userId: string, limit = 60) {
+export function workoutHistory(userId: string, limit = 60, since = "") {
   return all<{
     id: string;
     date: string;
@@ -206,12 +209,12 @@ export function workoutHistory(userId: string, limit = 60) {
     status: string;
     duration_min: number | null;
   }>(
-    "SELECT id, date, name, status, duration_min FROM workout_sessions WHERE user_id = ? ORDER BY date DESC, created_at DESC LIMIT ?",
-    [userId, limit],
+    "SELECT id, date, name, status, duration_min FROM workout_sessions WHERE user_id = ? AND date >= ? ORDER BY date DESC, created_at DESC LIMIT ?",
+    [userId, since, limit],
   );
 }
 
-export function cardioHistory(userId: string, limit = 60) {
+export function cardioHistory(userId: string, limit = 60, since = "") {
   return all<{
     id: string;
     date: string;
@@ -220,8 +223,8 @@ export function cardioHistory(userId: string, limit = 60) {
     intensity: string;
     calories: number;
   }>(
-    "SELECT id, date, activity_name, minutes, intensity, calories FROM cardio_sessions WHERE user_id = ? ORDER BY date DESC LIMIT ?",
-    [userId, limit],
+    "SELECT id, date, activity_name, minutes, intensity, calories FROM cardio_sessions WHERE user_id = ? AND date >= ? ORDER BY date DESC LIMIT ?",
+    [userId, since, limit],
   );
 }
 
