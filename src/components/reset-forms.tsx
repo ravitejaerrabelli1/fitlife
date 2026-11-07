@@ -16,14 +16,12 @@ function subscribeToHash(onChange: () => void) {
 
 /** Shows the new-password form for `/reset#<token>` links, otherwise the request form. */
 export function ResetPanel() {
-  const hashToken = useSyncExternalStore(
-    subscribeToHash,
-    () => tokenFromHash(window.location.hash),
-    () => "",
-  );
-  // Keep the token once seen, so in-page anchors like the skip link (#main) don't drop it.
-  const [token, setToken] = useState("");
-  if (hashToken && hashToken !== token) setToken(hashToken);
+  const hash = useSyncExternalStore(subscribeToHash, () => window.location.hash, () => "");
+  const hashToken = tokenFromHash(hash);
+  // In-page anchors like the skip link (#main) keep the last token; an empty hash clears it.
+  const [lastToken, setLastToken] = useState("");
+  const token = hashToken || (hash ? lastToken : "");
+  if (token !== lastToken) setLastToken(token);
   if (token) {
     return (
       <>
