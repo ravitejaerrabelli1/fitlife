@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useSyncExternalStore } from "react";
+import { useActionState, useState, useSyncExternalStore } from "react";
 import {
   completePasswordResetAction,
   requestPasswordResetAction,
@@ -16,11 +16,14 @@ function subscribeToHash(onChange: () => void) {
 
 /** Shows the new-password form for `/reset#<token>` links, otherwise the request form. */
 export function ResetPanel() {
-  const token = useSyncExternalStore(
+  const hashToken = useSyncExternalStore(
     subscribeToHash,
     () => tokenFromHash(window.location.hash),
     () => "",
   );
+  // Keep the token once seen, so in-page anchors like the skip link (#main) don't drop it.
+  const [token, setToken] = useState("");
+  if (hashToken && hashToken !== token) setToken(hashToken);
   if (token) {
     return (
       <>
