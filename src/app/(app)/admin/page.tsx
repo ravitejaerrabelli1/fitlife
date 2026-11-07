@@ -6,6 +6,7 @@ import { EXERCISES } from "@/lib/content/exercises";
 import { USDA_FOODS } from "@/lib/content/food-search";
 import { FOODS, SUPPLEMENTS } from "@/lib/content/foods";
 import { RECIPES } from "@/lib/content/recipes";
+import { resetLinkPath } from "@/lib/reset-link";
 import { requireSession } from "@/lib/session";
 
 export default async function AdminPage() {
@@ -73,7 +74,7 @@ export default async function AdminPage() {
                   — expires {new Date(reset.expires_at).toLocaleTimeString()}
                 </span>
                 <div>
-                  <code>/reset/{reset.token}</code>
+                  <code>{resetLinkPath(reset.token)}</code>
                 </div>
               </li>
             ))}
