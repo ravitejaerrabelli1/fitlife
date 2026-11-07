@@ -1,4 +1,5 @@
 import { OnboardingWizard } from "@/components/onboarding-wizard";
+import { TimeZoneSync } from "@/components/time-zone-sync";
 import { getProfile } from "@/lib/profile";
 import { requireSession } from "@/lib/session";
 
@@ -8,6 +9,7 @@ export default async function OnboardingPage() {
 
   return (
     <main id="main" className="mx-auto w-full max-w-xl px-4 py-8">
+      <TimeZoneSync saved={profile?.time_zone ?? ""} />
       <h1 className="text-2xl font-semibold">Let&apos;s set up your plan</h1>
       <p className="mt-1 text-sm text-muted">
         Five short steps. You can change any of it later.

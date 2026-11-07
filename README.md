@@ -31,6 +31,20 @@ The database is created on first use at `data/fitlife.db`. Override with
 role. Email delivery is not configured, so active password-reset links are listed
 on the admin page (`/admin`) for the admin to pass on.
 
+## Dates and time zones
+
+Daily logs (food, water, steps, weight, workouts, cardio) and daily totals use the
+user's local calendar day. The app saves each user's device time zone (IANA name such
+as `Asia/Kolkata`) in `profiles.time_zone` the first time they open an app page, and
+updates it if the device's zone changes. Until a zone is saved, or if a saved value is
+not a valid IANA zone, dates fall back to UTC (the previous behaviour). Existing log
+rows are never rewritten.
+
+Migration: on startup `src/lib/db.ts` adds the column with
+`ALTER TABLE profiles ADD COLUMN time_zone TEXT NOT NULL DEFAULT ''` if it is missing.
+It is additive and needs no manual step. To roll back, deploy the previous build; it
+ignores the extra column. Back up `data/fitlife.db` before upgrading production data.
+
 ## Checks
 
 ```bash

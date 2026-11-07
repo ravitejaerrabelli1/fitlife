@@ -15,6 +15,7 @@ import {
   WeightQuickLog,
 } from "@/components/quick-log";
 import { today } from "@/lib/db";
+import { localHour } from "@/lib/dates";
 import {
   cardioHistory,
   getNutritionLogs,
@@ -40,7 +41,7 @@ export default async function DashboardPage() {
   const targets = computeTargets(profile);
   if (!targets) redirect("/onboarding");
 
-  const date = today();
+  const date = today(profile.time_zone);
   const logs = getNutritionLogs(user.id, date);
   const totals = sumLogs(logs);
   const water = getWaterMl(user.id, date);
@@ -61,7 +62,7 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">
-            {greeting()}
+            {greeting(profile.time_zone)}
             {profile.first_name ? `, ${profile.first_name}` : ""}
           </h1>
           <p className="text-sm text-muted">
@@ -207,8 +208,8 @@ export default async function DashboardPage() {
   );
 }
 
-function greeting(): string {
-  const hour = new Date().getHours();
+function greeting(timeZone: string): string {
+  const hour = localHour(timeZone);
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";

@@ -23,6 +23,7 @@ import { RESTAURANT_ESTIMATES } from "@/lib/content/foods";
 import { computeTargets } from "@/lib/profile";
 import { requireOnboardedProfile } from "@/lib/session";
 import { today } from "@/lib/db";
+import { localHour } from "@/lib/dates";
 import type { FoodItem } from "@/lib/content/types";
 
 const MEAL_LABELS: Record<string, string> = {
@@ -43,8 +44,8 @@ export default async function FoodPage({
   const targets = computeTargets(profile);
   if (!targets) redirect("/onboarding");
 
-  const { q = "", mode = "search", meal = defaultMeal() } = await searchParams;
-  const date = today();
+  const { q = "", mode = "search", meal = defaultMeal(profile.time_zone) } = await searchParams;
+  const date = today(profile.time_zone);
   const logs = getNutritionLogs(user.id, date);
   const totals = sumLogs(logs);
 
@@ -285,8 +286,8 @@ function FoodRow({ item, meal }: { item: FoodItem; meal: string }) {
   );
 }
 
-function defaultMeal(): string {
-  const hour = new Date().getHours();
+function defaultMeal(timeZone: string): string {
+  const hour = localHour(timeZone);
   if (hour < 10) return "breakfast";
   if (hour < 12) return "morning_snack";
   if (hour < 15) return "lunch";

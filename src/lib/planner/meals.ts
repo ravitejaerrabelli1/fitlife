@@ -7,6 +7,7 @@ import type {
   Recipe,
 } from "../content/types";
 import { scaleNutrition, scaleRecipe } from "../calc/engine";
+import { addDays, localDate } from "../dates";
 
 export interface PlannerPreferences {
   dietPrefs: string[];
@@ -295,7 +296,8 @@ export interface GenerateOptions {
   calorieTarget: number;
   proteinTarget: number;
   preferences: PlannerPreferences;
-  startDate?: Date;
+  /** First plan day as YYYY-MM-DD; defaults to today in UTC. */
+  startDate?: string;
   includeEveningSnack?: boolean;
   seed?: number;
 }
@@ -306,7 +308,7 @@ export function generateMealPlan(options: GenerateOptions): MealPlan {
     calorieTarget,
     proteinTarget,
     preferences,
-    startDate = new Date(),
+    startDate = localDate(),
     includeEveningSnack = false,
   } = options;
 
@@ -323,8 +325,6 @@ export function generateMealPlan(options: GenerateOptions): MealPlan {
   const plannedDays: PlannedDay[] = [];
 
   for (let dayIndex = 0; dayIndex < days; dayIndex++) {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + dayIndex);
     const meals: PlannedMeal[] = [];
 
     for (const slot of slots) {
@@ -348,7 +348,7 @@ export function generateMealPlan(options: GenerateOptions): MealPlan {
 
     plannedDays.push({
       dayIndex,
-      date: date.toISOString().slice(0, 10),
+      date: addDays(startDate, dayIndex),
       meals,
       totals: sumMeals(meals),
     });

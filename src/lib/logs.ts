@@ -1,5 +1,5 @@
 import { baseFoodName } from "./content/foods";
-import { all, get, newId, nowIso, run, today } from "./db";
+import { all, get, newId, nowIso, run } from "./db";
 
 export interface NutritionLogRow {
   id: string;
@@ -46,7 +46,7 @@ export function sumLogs(logs: NutritionLogRow[]): DayTotals {
 export function addNutritionLog(
   userId: string,
   input: {
-    date?: string;
+    date: string;
     meal: string;
     name: string;
     source?: string;
@@ -64,7 +64,7 @@ export function addNutritionLog(
     [
       newId(),
       userId,
-      input.date ?? today(),
+      input.date,
       input.meal,
       input.name,
       input.source ?? "food",
@@ -91,7 +91,7 @@ export function getWaterMl(userId: string, date: string): number {
   return Math.round(row?.total ?? 0);
 }
 
-export function addWater(userId: string, amountMl: number, date = today()): void {
+export function addWater(userId: string, amountMl: number, date: string): void {
   run(
     "INSERT INTO water_logs (id, user_id, date, amount_ml, created_at) VALUES (?, ?, ?, ?, ?)",
     [newId(), userId, date, amountMl, nowIso()],
@@ -106,7 +106,7 @@ export function getSteps(userId: string, date: string): number {
   return row?.steps ?? 0;
 }
 
-export function setSteps(userId: string, steps: number, date = today()): void {
+export function setSteps(userId: string, steps: number, date: string): void {
   run(
     `INSERT INTO step_logs (id, user_id, date, steps) VALUES (?, ?, ?, ?)
      ON CONFLICT (user_id, date) DO UPDATE SET steps = excluded.steps`,
@@ -124,7 +124,7 @@ export function recentSteps(userId: string, days: number) {
 export function setWeight(
   userId: string,
   weightKg: number,
-  date = today(),
+  date: string,
   note = "",
 ): void {
   run(
