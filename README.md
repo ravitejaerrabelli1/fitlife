@@ -56,6 +56,11 @@ npm run build
 Rollout: deploy as usual; the table is created on startup. Rollback: redeploy the
 previous build (it ignores the table), optionally `DROP TABLE auth_attempts`.
 
+## Deploying to Railway
+
+See [DEPLOY.md](DEPLOY.md). In short: one service, one volume mounted at `/data`,
+`DATABASE_FILE=/data/fitlife.db`, and a healthcheck on `/api/health`.
+
 ## Structure
 
 - `src/lib/calc` — BMR, TDEE, macros, BMI, body fat, weight trends, adaptive
