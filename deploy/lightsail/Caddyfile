@@ -1,0 +1,17 @@
+FITLIFE_DOMAIN {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		-Server
+	}
+	reverse_proxy 127.0.0.1:3000
+	log {
+		output file /var/log/caddy/fitlife.log
+		# Older reset links carry the token in the path (/reset/<token>); never write it to disk.
+		format filter {
+			request>uri regexp "^/reset/[^?#]*" "/reset/REDACTED"
+			request>headers>Referer delete
+		}
+	}
+}

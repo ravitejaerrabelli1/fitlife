@@ -56,6 +56,12 @@ npm run build
 Rollout: deploy as usual; the table is created on startup. Rollback: redeploy the
 previous build (it ignores the table), optionally `DROP TABLE auth_attempts`.
 
+## Deploying (AWS Lightsail)
+
+See [DEPLOY.md](DEPLOY.md). In short: one Ubuntu server, the database on its disk at
+`/var/lib/fitlife/fitlife.db`, Caddy for HTTPS, systemd for the app, nightly database
+copies plus Lightsail snapshots, and a health check on `/api/health`.
+
 ## Structure
 
 - `src/lib/calc` — BMR, TDEE, macros, BMI, body fat, weight trends, adaptive

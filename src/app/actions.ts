@@ -45,6 +45,7 @@ import { calculateEstimatedCardioCalories } from "@/lib/calc/engine";
 import { getCardioActivity } from "@/lib/content/cardio";
 import { getExercise } from "@/lib/content/exercises";
 import { lbToKg, inToCm } from "@/lib/calc/units";
+import { isSignupAllowed } from "@/lib/signup";
 
 export interface ActionResult {
   ok: boolean;
@@ -67,6 +68,9 @@ export async function signUpAction(
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0].message };
+  }
+  if (!isSignupAllowed(parsed.data.email)) {
+    return { ok: false, error: "Sign-up is invite-only right now. Ask the FitLife admin for access." };
   }
   if (findUserByEmail(parsed.data.email)) {
     return { ok: false, error: "An account with that email already exists." };

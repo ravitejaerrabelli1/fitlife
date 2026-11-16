@@ -1,0 +1,12 @@
+#!/bin/sh
+# Writes a consistent copy of the live database with VACUUM INTO and keeps 14 days.
+set -eu
+dir=/var/lib/fitlife/backups
+mkdir -p "$dir"
+out="$dir/fitlife-$(date -u +%Y%m%dT%H%M%SZ).db"
+DB="$DATABASE_FILE" OUT="$out" /usr/bin/node -e '
+const { DatabaseSync } = require("node:sqlite");
+const db = new DatabaseSync(process.env.DB);
+db.exec(`VACUUM INTO '"'"'${process.env.OUT}'"'"'`);
+db.close();'
+find "$dir" -name 'fitlife-*.db' -mtime +14 -delete
