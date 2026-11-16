@@ -1,0 +1,22 @@
+[Unit]
+Description=FitLife (Next.js)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=fitlife
+Group=fitlife
+WorkingDirectory=/opt/fitlife/current
+EnvironmentFile=/etc/fitlife.env
+Environment=NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=127.0.0.1
+ExecStart=/usr/bin/npm run start -- -H 127.0.0.1 -p 3000
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/fitlife /opt/fitlife
+
+[Install]
+WantedBy=multi-user.target

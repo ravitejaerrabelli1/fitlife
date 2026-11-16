@@ -1,0 +1,8 @@
+[Unit]
+Description=Consistent SQLite copy of the FitLife database
+
+[Service]
+Type=oneshot
+User=fitlife
+EnvironmentFile=/etc/fitlife.env
+ExecStart=/usr/local/bin/fitlife-backup

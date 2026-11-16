@@ -1,58 +1,81 @@
-# Deploying FitLife on Railway
+# Deploying FitLife on AWS Lightsail
 
-FitLife is one Next.js server with a SQLite file. On Railway that means **one service with
-one volume**. Build and deploy settings live in `railway.json`, and Node 24 is pinned by
-`engines.node` in `package.json`.
+FitLife is one Next.js server with a SQLite file, so it runs on **one Lightsail Linux
+server** with the database on the server's own disk. Nothing about the app or database
+changes. The files used here live in [`deploy/lightsail/`](deploy/lightsail/).
 
-## 1. Create the service
-1. In Railway, create a project and add a service from this GitHub repo.
-2. Add a **volume** to the service, mounted at `/data`.
-3. Set these service variables:
+| Piece | What it does |
+|---|---|
+| `setup.sh` | One-time server setup: 1 GB swap, Node 24, Caddy, a `fitlife` system user, systemd units, automatic security updates |
+| `fitlife.service` | Runs `next start` on `127.0.0.1:3000` and restarts it if it crashes |
+| `Caddyfile` | Public HTTPS (automatic Let's Encrypt certificate) proxied to the app |
+| `fitlife-backup` + timer | Nightly consistent copy of the database (`VACUUM INTO`), kept 14 days |
+| `deploy.sh` | Builds locally, uploads a new release, backs up the database, switches over, runs the health check; `--rollback` returns to the previous release |
+
+## 1. Create the server (Lightsail console or CLI)
+1. Create an instance: **Linux/Unix → OS only → Ubuntu 24.04**, smallest bundle with a
+   public IPv4 address (512 MB memory). Pick the region closest to your users.
+2. Attach a **static IP** (free while it's attached to a running instance).
+3. Networking → IPv4 firewall: allow **SSH 22, HTTP 80, HTTPS 443**.
+4. Turn on **automatic snapshots** (daily). These are your whole-server backups.
+5. Point a domain at the static IP (an `A` record). For staging without a domain you can
+   use `<ip-with-dashes>.sslip.io`.
+
+## 2. Set up the server
+```bash
+scp -r deploy/lightsail ubuntu@<ip>:/tmp/
+ssh ubuntu@<ip> 'sudo FITLIFE_DOMAIN=<domain> bash /tmp/lightsail/setup.sh'
+ssh ubuntu@<ip> 'sudo nano /etc/fitlife.env'
+```
+
+`/etc/fitlife.env` (readable only by root and the app):
 
 | Variable | Value | Why |
 |---|---|---|
-| `DATABASE_FILE` | `/data/fitlife.db` | Keeps the database on the volume, so it survives restarts and redeploys |
+| `DATABASE_FILE` | `/var/lib/fitlife/fitlife.db` | The database lives on the server disk and survives restarts and redeploys |
 | `ADMIN_EMAIL` | your email | That account becomes admin when it signs up |
-| `ALLOWED_SIGNUP_EMAILS` | comma-separated emails | Optional. Only these emails can sign up (use it for staging or a private launch) |
-| `NEXT_TELEMETRY_DISABLED` | `1` | Turns off Next.js telemetry |
+| `ALLOWED_SIGNUP_EMAILS` | comma-separated emails | Optional. Only these emails can sign up (staging or a private launch) |
 
-No other secrets are needed: sessions are random tokens stored in the database.
+No other secrets are needed: sessions are random tokens stored in the database. The
+session cookie is `Secure` because the service runs with `NODE_ENV=production`.
 
-4. Under Networking, generate a Railway domain. Railway serves it over HTTPS, and the
-   session cookie is `Secure` because `next start` runs with `NODE_ENV=production`.
+## 3. Deploy
+From a checkout of the commit you want to ship (Node 24 installed locally):
+```bash
+./deploy/lightsail/deploy.sh ubuntu@<ip> ~/.ssh/<key>.pem
+```
+The build runs on your machine because 512 MB is too little memory for `next build`. Each
+release goes to `/opt/fitlife/releases/<time>-<commit>`, and `/opt/fitlife/current` points
+at the live one. Restarts take a few seconds.
 
-## 2. Things to know
-- **Do not add replicas.** SQLite is a single file, and Railway doesn't allow replicas on
-  services with a volume.
-- **Redeploys have a short downtime** (seconds). Railway stops the old deployment before it
-  mounts the volume on the new one.
-- **The volume is only there at runtime**, not during the build. The app creates the database
-  and runs its additive migrations on the first request.
-- **Healthcheck:** `/api/health` runs `SELECT 1` and returns 200, or 503 if the database
-  can't be opened. A deploy only goes live after it returns 200.
+**Rollback:** `./deploy/lightsail/deploy.sh --rollback ubuntu@<ip> ~/.ssh/<key>.pem`.
+Schema changes are additive, so an older release can read the newer database. If data has
+to go back too, restore a backup (below).
 
-## 3. Backups
-- In the service's **Backups** tab, turn on a **daily** schedule (and weekly if you want to
-  keep backups longer). These are volume snapshots, billed at volume storage rates for the
-  data that changed.
-- Before each production deploy, create a manual backup.
-- Restore: Backups tab → **Restore** on a dated backup → review the staged change → deploy.
-  Test a restore on staging once before launch.
-- Users can also download their own data from Profile → Export.
+## 4. Backups and restore
+- **Nightly database copies** in `/var/lib/fitlife/backups` (14 days), plus one before
+  every deploy. Run one now with `sudo systemctl start fitlife-backup`.
+- **Lightsail automatic snapshots** keep daily copies of the whole server disk.
+- **Restore a database copy:**
+  ```bash
+  sudo systemctl stop fitlife
+  sudo -u fitlife cp /var/lib/fitlife/backups/<file>.db /var/lib/fitlife/fitlife.db
+  sudo rm -f /var/lib/fitlife/fitlife.db-wal /var/lib/fitlife/fitlife.db-shm
+  sudo systemctl start fitlife
+  ```
+- **Restore a snapshot:** create a new instance from the snapshot, then move the static IP
+  to it.
+- Users can download their own data from Profile → Export.
 
-## 4. Logs and monitoring
-- Railway keeps the server's stdout and stderr in the **Logs** tab. `next start` doesn't
-  log request URLs, and the app never logs reset tokens.
-- Reset links look like `/reset#<token>` (after #9 is merged). The token is in the URL
-  fragment, so it never reaches Railway's edge or HTTP logs.
-- The restart policy restarts the server up to 5 times if it crashes.
-- External error tracking (such as Sentry) isn't set up. Adding it is a separate decision
-  because it sends error data to a third party.
+## 5. Logs and monitoring
+- App output: `journalctl -u fitlife`. `next start` doesn't log request URLs, and the app
+  never logs reset tokens.
+- Caddy access log: `/var/log/caddy/fitlife.log`. Reset links look like `/reset#<token>`,
+  and the browser never sends the part after `#`, so tokens can't appear in it.
+- Lightsail shows CPU and network metrics and can send alarm emails. External error
+  tracking (such as Sentry) isn't set up; adding it is a separate decision because it
+  sends error data to a third party.
 
-## 5. Staging → production
-Use a Railway **environment** (e.g. `staging`) with its own volume and variables, and set
-`ALLOWED_SIGNUP_EMAILS` there. Promote by deploying the same commit to `production`.
-
-**Rollback:** redeploy the previous deployment from the Deployments tab. Schema changes are
-additive, so older builds can read the newer database. If data has to go back as well,
-restore the backup taken before the deploy.
+## 6. Staging → production
+Use a separate staging server with its own database and `ALLOWED_SIGNUP_EMAILS` set.
+Never copy production data to staging. Promote by deploying the same commit to production.

@@ -56,10 +56,11 @@ npm run build
 Rollout: deploy as usual; the table is created on startup. Rollback: redeploy the
 previous build (it ignores the table), optionally `DROP TABLE auth_attempts`.
 
-## Deploying to Railway
+## Deploying (AWS Lightsail)
 
-See [DEPLOY.md](DEPLOY.md). In short: one service, one volume mounted at `/data`,
-`DATABASE_FILE=/data/fitlife.db`, and a healthcheck on `/api/health`.
+See [DEPLOY.md](DEPLOY.md). In short: one Ubuntu server, the database on its disk at
+`/var/lib/fitlife/fitlife.db`, Caddy for HTTPS, systemd for the app, nightly database
+copies plus Lightsail snapshots, and a health check on `/api/health`.
 
 ## Structure
 
