@@ -25,10 +25,10 @@ export function WeightChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <AreaChart data={data} margin={{ left: -20, right: 8, top: 8 }}>
+      <AreaChart data={data} margin={{ right: 8, top: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
         <XAxis dataKey="date" tick={axis} minTickGap={24} />
-        <YAxis tick={axis} domain={["auto", "auto"]} unit={` ${unit}`} width={60} />
+        <YAxis tick={axis} domain={["auto", "auto"]} unit={` ${unit}`} width="auto" />
         <Tooltip />
         <Area
           type="monotone"
@@ -59,10 +59,10 @@ export function IntakeChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data} margin={{ left: -20, right: 8, top: 8 }}>
+      <BarChart data={data} margin={{ right: 8, top: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
         <XAxis dataKey="date" tick={axis} minTickGap={24} />
-        <YAxis tick={axis} width={50} />
+        <YAxis tick={axis} width="auto" />
         <Tooltip />
         <Bar dataKey="calories" fill="var(--brand)" name={`Calories (target ${target})`} />
         <Bar dataKey="protein" fill="var(--protein)" name="Protein (g)" />
@@ -84,10 +84,10 @@ export function SimpleLineChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <LineChart data={data} margin={{ left: -20, right: 8, top: 8 }}>
+      <LineChart data={data} margin={{ right: 8, top: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
         <XAxis dataKey="label" tick={axis} minTickGap={24} />
-        <YAxis tick={axis} width={50} />
+        <YAxis tick={axis} width="auto" />
         <Tooltip />
         <Line type="monotone" dataKey={dataKey} stroke={color} name={label} dot={false} />
       </LineChart>
